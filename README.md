@@ -36,17 +36,16 @@ steam-review [オプション]
 | -output    | 出力ディレクトリ | output |
 | -split     | 言語別にファイルを分けて保存 | false |
 | -json      | 出力ファイルをJSON形式(.json)にする | false |
-| -sort      | レビューのソート順 | created_desc |
+| -filter    | レビューのフィルター (recent/updated/all) | all |
 | -verbose   | 詳細なログを表示 | false |
 | -help      | ヘルプを表示 | false |
 | -version   | バージョン情報を表示 | - |
 
-### ソートオプション
+### フィルターオプション
 
-- `created_desc`: 作成日時の降順（新しい順）
-- `created_asc`: 作成日時の昇順（古い順）
-- `updated_desc`: 更新日時の降順（新しい更新順）
-- `updated_asc`: 更新日時の昇順（古い更新順）
+- `all`: 有用性による並び替え（デフォルト）
+- `recent`: 作成日時による並び替え
+- `updated`: 最終更新日時による並び替え
 
 ## 使用例
 
@@ -77,7 +76,7 @@ steam-review -appid 730 -lang "all" -max 1000 -split
 
 6. 最近更新されたレビューから取得
 ```bash
-steam-review -appid 730 -sort updated_desc -max 200
+steam-review -appid 730 -filter updated -max 200
 ```
 
 ## 出力ファイル
