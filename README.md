@@ -1,5 +1,7 @@
 # Steam Reviews CLI Tool
 
+[![Test](https://github.com/y-moriya/steam-review/actions/workflows/test.yml/badge.svg)](https://github.com/y-moriya/steam-review/actions/workflows/test.yml)
+
 Steam ReviewsはSteamゲームのレビューを取得・保存するためのコマンドラインツールです。
 App IDまたはゲーム名を指定して、レビューを取得し、JSON形式またはテキスト形式で保存できます。
 
