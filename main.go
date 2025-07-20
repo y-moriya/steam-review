@@ -125,6 +125,10 @@ const (
 	SortCreatedAsc   = "created_asc"    // 作成日時の昇順
 	SortUpdatedDesc  = "updated_desc"   // 更新日時の降順
 	SortUpdatedAsc   = "updated_asc"    // 更新日時の昇順
+
+	// ファイル形式
+	FileExtJSON = ".json" // JSON形式のファイル拡張子
+	FileExtTXT  = ".txt"  // テキスト形式のファイル拡張子
 )
 
 // コマンドライン引数の設定
@@ -170,6 +174,39 @@ func GetAppIDByName(gameName string) (string, error) {
 	return "", fmt.Errorf("ゲーム '%s' が見つかりません", gameName)
 }
 
+// setLanguageFilter Steam APIのリクエストパラメータに言語フィルタを設定
+func setLanguageFilter(params url.Values, languages []string) {
+	if len(languages) > 0 {
+		// "all"が含まれている場合は全言語を取得
+		for _, lang := range languages {
+			if strings.ToLower(lang) == "all" {
+				params.Set("language", "all")
+				return
+			}
+		}
+		// それ以外の場合は指定された言語をカンマ区切りで設定
+		params.Set("language", strings.Join(languages, ","))
+	} else {
+		params.Set("language", "all")
+	}
+}
+
+// setSortOrder Steam APIのリクエストパラメータにソート順を設定
+func setSortOrder(params url.Values, sortOrder string) {
+	switch sortOrder {
+	case SortCreatedAsc:
+		params.Set("review_date_order", "oldest")
+	case SortCreatedDesc:
+		params.Set("review_date_order", "newest")
+	case SortUpdatedAsc:
+		params.Set("review_date_order", "updated_oldest")
+	case SortUpdatedDesc:
+		params.Set("review_date_order", "updated_newest")
+	default:
+		params.Set("review_date_order", "newest") // デフォルトは作成日時の降順
+	}
+}
+
 // FetchReviewsFromSteam Steam APIから直接レビューを取得
 func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, sortOrder string, languages []string) (*SteamReviewResponse, error) {
 	baseURL := "https://store.steampowered.com/appreviews/" + appID
@@ -183,36 +220,8 @@ func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, sortOrde
 	params.Set("review_type", "all")
 	params.Set("purchase_type", "all")
 
-	// 言語の設定
-	if len(languages) > 0 {
-		// "all"が含まれている場合は全言語を取得
-		for _, lang := range languages {
-			if strings.ToLower(lang) == "all" {
-				params.Set("language", "all")
-				break
-			}
-		}
-		// それ以外の場合は指定された言語をカンマ区切りで設定
-		if params.Get("language") == "" {
-			params.Set("language", strings.Join(languages, ","))
-		}
-	} else {
-		params.Set("language", "all")
-	}
-
-	// ソート順の設定
-	switch sortOrder {
-	case SortCreatedAsc:
-		params.Set("review_date_order", "oldest")
-	case SortCreatedDesc:
-		params.Set("review_date_order", "newest")
-	case SortUpdatedAsc:
-		params.Set("review_date_order", "updated_oldest")
-	case SortUpdatedDesc:
-		params.Set("review_date_order", "updated_newest")
-	default:
-		params.Set("review_date_order", "newest") // デフォルトは作成日時の降順
-	}
+	setLanguageFilter(params, languages)
+	setSortOrder(params, sortOrder)
 	
 	fullURL := baseURL + "?" + params.Encode()
 	
@@ -444,7 +453,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 	
 	// 言語別にファイル保存
 	for lang, langReviews := range reviewsByLanguage {
-		filename := strings.TrimSuffix(baseFilename, ".json") + "_" + lang + ext
+		filename := strings.TrimSuffix(baseFilename, FileExtJSON) + "_" + lang + ext
 		if outputDir != "" {
 			filename = outputDir + "/" + filename
 		}
@@ -460,7 +469,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 	}
 	
 	// 全体のサマリーも保存
-	summaryFilename := strings.TrimSuffix(baseFilename, ".json") + "_all_languages" + ext
+	summaryFilename := strings.TrimSuffix(baseFilename, FileExtJSON) + "_all_languages" + ext
 	if outputDir != "" {
 		summaryFilename = outputDir + "/" + summaryFilename
 	}
