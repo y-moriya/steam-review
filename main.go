@@ -560,10 +560,11 @@ func parseLanguages(langStr string) []string {
 
 // printUsage 使用方法を表示
 func printUsage() {
+	name := AppName
 	fmt.Printf(`%s version %s
 
 使用方法:
-  %s [オプション]
+  steam-review [オプション]
 
 オプション:
   -appid string         Steam App ID (例: 440)
@@ -580,22 +581,25 @@ func printUsage() {
 
 使用例:
   # App IDを指定して日本語レビューを取得（デフォルト: 有用性順）
-  %s -appid 440 -max 500 -verbose
+  steam-review -appid 440 -max 500 -verbose
 
   # 作成日時順でレビューを取得
-  %s -appid 440 -max 500 -filter recent -verbose
+  steam-review -appid 440 -max 500 -filter recent -verbose
 
   # ゲーム名で英語レビューを取得
-  %s -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
+  steam-review -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
 
   # 複数言語のレビューを取得
-  %s -game "Elden Ring" -lang "japanese,english" -max 300 -split
+  steam-review -game "Elden Ring" -lang "japanese,english" -max 300 -split
 
   # 日本語レビューをJSON形式で保存
-  %s -appid 570 -max 2000 -output ./dota2_reviews -json -verbose
+  steam-review -appid 570 -max 2000 -output ./dota2_reviews -json -verbose
 
   # すべての言語のレビューを取得
-  %s -appid 730 -lang "all" -max 1000 -split
+  steam-review -appid 730 -lang "all" -max 1000 -split
+
+  # 最近更新されたレビューから取得
+  steam-review -appid 730 -filter updated -max 200
 
 注意:
   - App IDとゲーム名のどちらか一方を指定してください
@@ -603,7 +607,7 @@ func printUsage() {
   - "all" を指定するとすべての言語のレビューを取得します
   - 大量のレビューを取得する場合は時間がかかります
   - Steam APIのレート制限により、リクエスト間に1秒の待機時間があります
-`, AppName, Version, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+`, name, Version)
 }
 
 func main() {
