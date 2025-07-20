@@ -2,20 +2,22 @@
 
 [![Test](https://github.com/y-moriya/steam-review/actions/workflows/test.yml/badge.svg)](https://github.com/y-moriya/steam-review/actions/workflows/test.yml)
 
-Steam ReviewsはSteamゲームのレビューを取得・保存するためのコマンドラインツールです。
-App IDまたはゲーム名を指定して、レビューを取得し、JSON形式またはテキスト形式で保存できます。
+English | [日本語](README.ja.md)
 
-## 機能
+Steam Reviews is a command-line tool for retrieving and saving Steam game reviews.
+You can specify a game by its App ID or name and save the reviews in either JSON or text format.
 
-- App IDまたはゲーム名でゲームを指定
-- 言語でレビューをフィルタリング
-- 最大取得件数の指定
-- レビューの作成日時/更新日時でのソート
-- JSON形式またはテキスト形式での保存
-- 言語別のファイル分割
-- 詳細な統計情報の表示
+## Features
 
-## インストール
+- Search games by App ID or game name
+- Filter reviews by language
+- Specify maximum number of reviews to retrieve
+- Sort reviews by creation date or update time
+- Save in JSON or text format
+- Split files by language
+- Display detailed statistics
+
+## Installation
 
 ```bash
 go install github.com/y-moriya/steam-review@latest
@@ -27,66 +29,66 @@ go install github.com/y-moriya/steam-review@latest
 steam-review [オプション]
 ```
 
-### オプション
+### Options
 
-| オプション | 説明 | デフォルト値 |
-|------------|------|--------------|
-| -appid     | Steam App ID (例: 440) | - |
-| -game      | ゲーム名 (例: "Team Fortress 2") | - |
-| -max       | 最大取得レビュー数 (0で無制限) | 100 |
-| -lang      | 取得する言語 (カンマ区切り) | japanese |
-| -output    | 出力ディレクトリ | output |
-| -split     | 言語別にファイルを分けて保存 | false |
-| -json      | 出力ファイルをJSON形式(.json)にする | false |
-| -filter    | レビューのフィルター (recent/updated/all) | all |
-| -verbose   | 詳細なログを表示 | false |
-| -help      | ヘルプを表示 | false |
-| -version   | バージョン情報を表示 | - |
+| Option     | Description | Default |
+|------------|-------------|---------|
+| -appid     | Steam App ID (e.g., 440) | - |
+| -game      | Game name (e.g., "Team Fortress 2") | - |
+| -max       | Maximum number of reviews to retrieve (0 for unlimited) | 100 |
+| -lang      | Language to retrieve (comma-separated) | japanese |
+| -output    | Output directory | output |
+| -split     | Split files by language | false |
+| -json      | Save output files in JSON format (.json) | false |
+| -filter    | Review filter (recent/updated/all) | all |
+| -verbose   | Display detailed logs | false |
+| -help      | Display help | false |
+| -version   | Display version information | - |
 
-### フィルターオプション
+### Filter Options
 
-- `all`: 有用性による並び替え（デフォルト）
-- `recent`: 作成日時による並び替え
-- `updated`: 最終更新日時による並び替え
+- `all`: Sort by helpfulness (default)
+- `recent`: Sort by creation date
+- `updated`: Sort by last update time
 
-## 使用例
+## Examples
 
-1. App IDを指定して日本語レビューを取得（デフォルト）
+1. Get Japanese reviews by App ID (default)
 ```bash
 steam-review -appid 440 -max 500 -verbose
 ```
 
-2. ゲーム名で英語レビューを取得
+2. Get English reviews by game name
 ```bash
 steam-review -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
 ```
 
-3. 複数言語のレビューを取得
+3. Get reviews in multiple languages
 ```bash
 steam-review -game "Elden Ring" -lang "japanese,english" -max 300 -split
 ```
 
-4. 日本語レビューをJSON形式で保存
+4. Save Japanese reviews in JSON format
 ```bash
 steam-review -appid 570 -max 2000 -output ./dota2_reviews -json -verbose
 ```
 
-5. すべての言語のレビューを取得
+5. Get reviews in all languages
 ```bash
 steam-review -appid 730 -lang "all" -max 1000 -split
 ```
 
-6. 最近更新されたレビューから取得
+6. Get recently updated reviews
 ```bash
 steam-review -appid 730 -filter updated -max 200
 ```
 
-## 出力ファイル
+## Output Files
 
-### テキスト形式 (デフォルト)
+### Text Format (Default)
 
 ```
-=== レビュー 1 ===
+=== Review 1 ===
 ID: 195635539
 language: japanese
 voted_up: true
@@ -94,11 +96,11 @@ votes_up: 54
 votes_funny: 28
 weighted_score: 0.82
 steam_purchase: true
-playtime: 3754分
+playtime: 3754 minutes
 created_at: 2025-05-26 00:49:30
 updated_at: 2025-05-26 22:12:04
 review:
-レビュー本文
+Review text
 ```
 
 ### JSON形式 (-json オプション)
@@ -132,15 +134,15 @@ review:
 ]
 ```
 
-## 注意事項
+## Notes
 
-- App IDとゲーム名のどちらか一方を指定してください
-- `-lang` を指定しない場合、デフォルトで日本語レビューのみを取得します
-- `all` を指定するとすべての言語のレビューを取得します
-- 大量のレビューを取得する場合は時間がかかります
-- Steam APIのレート制限により、リクエスト間に1秒の待機時間があります
-- 出力ディレクトリは自動的に作成されます
+- Specify either App ID or game name, not both
+- If `-lang` is not specified, only Japanese reviews will be retrieved by default
+- Use `all` to retrieve reviews in all languages
+- Retrieving a large number of reviews may take time
+- Due to Steam API rate limits, there is a 1-second delay between requests
+- Output directory will be created automatically
 
-## ライセンス
+## License
 
-[MITライセンス](LICENSE)
+[MIT License](LICENSE)
