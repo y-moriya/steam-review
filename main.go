@@ -119,6 +119,14 @@ type AuthorData struct {
 	LastPlayed             int64  `json:"last_played"`
 }
 
+// レビューのソート順
+const (
+	SortCreatedDesc  = "created_desc"   // 作成日時の降順
+	SortCreatedAsc   = "created_asc"    // 作成日時の昇順
+	SortUpdatedDesc  = "updated_desc"   // 更新日時の降順
+	SortUpdatedAsc   = "updated_asc"    // 更新日時の昇順
+)
+
 // コマンドライン引数の設定
 type Config struct {
 	AppID        string
@@ -129,6 +137,7 @@ type Config struct {
 	Verbose      bool
 	SplitByLang  bool
 	OutputTxt    bool
+	SortOrder    string   // レビューのソート順
 }
 
 // GetAppIDByName ゲーム名からSteam App IDを取得
@@ -162,7 +171,7 @@ func GetAppIDByName(gameName string) (string, error) {
 }
 
 // FetchReviewsFromSteam Steam APIから直接レビューを取得
-func FetchReviewsFromSteam(appID string, cursor string, numPerPage int) (*SteamReviewResponse, error) {
+func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, sortOrder string, languages []string) (*SteamReviewResponse, error) {
 	baseURL := "https://store.steampowered.com/appreviews/" + appID
 	
 	params := url.Values{}
@@ -170,10 +179,40 @@ func FetchReviewsFromSteam(appID string, cursor string, numPerPage int) (*SteamR
 	params.Set("cursor", cursor)
 	params.Set("num_per_page", strconv.Itoa(numPerPage))
 	params.Set("filter", "all")
-	params.Set("language", "all")
 	params.Set("day_range", "9223372036854775807")
 	params.Set("review_type", "all")
 	params.Set("purchase_type", "all")
+
+	// 言語の設定
+	if len(languages) > 0 {
+		// "all"が含まれている場合は全言語を取得
+		for _, lang := range languages {
+			if strings.ToLower(lang) == "all" {
+				params.Set("language", "all")
+				break
+			}
+		}
+		// それ以外の場合は指定された言語をカンマ区切りで設定
+		if params.Get("language") == "" {
+			params.Set("language", strings.Join(languages, ","))
+		}
+	} else {
+		params.Set("language", "all")
+	}
+
+	// ソート順の設定
+	switch sortOrder {
+	case SortCreatedAsc:
+		params.Set("review_date_order", "oldest")
+	case SortCreatedDesc:
+		params.Set("review_date_order", "newest")
+	case SortUpdatedAsc:
+		params.Set("review_date_order", "updated_oldest")
+	case SortUpdatedDesc:
+		params.Set("review_date_order", "updated_newest")
+	default:
+		params.Set("review_date_order", "newest") // デフォルトは作成日時の降順
+	}
 	
 	fullURL := baseURL + "?" + params.Encode()
 	
@@ -258,7 +297,7 @@ func FilterReviewsByLanguage(reviews []ReviewData, languages []string) []ReviewD
 }
 
 // FetchAllReviews 指定されたApp IDのレビューを取得
-func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []string) ([]ReviewData, error) {
+func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []string, sortOrder string) ([]ReviewData, error) {
 	var allReviews []ReviewData
 	cursor := "*"
 	numPerPage := 100
@@ -285,7 +324,7 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 			log.Printf("現在のレビュー数: %d, カーソル: %s", len(allReviews), cursor)
 		}
 		
-		resp, err := FetchReviewsFromSteam(appID, cursor, numPerPage)
+		resp, err := FetchReviewsFromSteam(appID, cursor, numPerPage, sortOrder, languages)
 		if err != nil {
 			return nil, fmt.Errorf("レビュー取得エラー: %w", err)
 		}
@@ -438,7 +477,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 }
 
 // GetReviewsByGameName ゲーム名からレビューを取得
-func GetReviewsByGameName(gameName string, maxReviews int, verbose bool) ([]ReviewData, string, error) {
+func GetReviewsByGameName(gameName string, maxReviews int, verbose bool, languages []string, sortOrder string) ([]ReviewData, string, error) {
 	appID, err := GetAppIDByName(gameName)
 	if err != nil {
 		return nil, "", fmt.Errorf("App ID取得エラー: %w", err)
@@ -446,7 +485,7 @@ func GetReviewsByGameName(gameName string, maxReviews int, verbose bool) ([]Revi
 	if verbose {
 		log.Printf("ゲーム '%s' (App ID: %s) のレビューを取得します", gameName, appID)
 	}
-	reviews, err := FetchAllReviews(appID, maxReviews, verbose, nil)
+	reviews, err := FetchAllReviews(appID, maxReviews, verbose, languages, sortOrder)
 	return reviews, appID, err
 }
 
@@ -563,6 +602,8 @@ func main() {
 	flag.IntVar(&config.MaxReviews, "max", 100, "最大取得レビュー数 (0で無制限)")
 	flag.StringVar(&languageStr, "lang", "japanese", "取得する言語 (カンマ区切り, デフォルト: japanese)")
 	flag.StringVar(&config.OutputDir, "output", "output", "出力ディレクトリ")
+	flag.StringVar(&config.SortOrder, "sort", SortCreatedDesc, 
+		"レビューのソート順 (created_desc: 作成日時の降順, created_asc: 作成日時の昇順, updated_desc: 更新日時の降順, updated_asc: 更新日時の昇順)")
 	flag.BoolVar(&config.SplitByLang, "split", false, "言語別にファイルを分けて保存")
 	flag.BoolVar(&config.OutputTxt, "txt", false, "出力ファイルをテキスト形式(.txt)にする")
 	flag.BoolVar(&config.Verbose, "verbose", false, "詳細なログを表示")
@@ -611,13 +652,13 @@ func main() {
 		if config.Verbose {
 			log.Printf("App ID %s のレビューを取得中...", appID)
 		}
-		reviews, err = FetchAllReviews(appID, config.MaxReviews, config.Verbose, config.Languages)
+		reviews, err = FetchAllReviews(appID, config.MaxReviews, config.Verbose, config.Languages, config.SortOrder)
 	} else {
 		gameName = config.GameName
 		if config.Verbose {
 			log.Printf("ゲーム '%s' のレビューを取得中...", gameName)
 		}
-		reviews, appID, err = GetReviewsByGameName(gameName, config.MaxReviews, config.Verbose)
+		reviews, appID, err = GetReviewsByGameName(gameName, config.MaxReviews, config.Verbose, config.Languages, config.SortOrder)
 	}
 
 	if err != nil {
