@@ -23,10 +23,10 @@ You can specify a game by its App ID or name and save the reviews in either JSON
 go install github.com/y-moriya/steam-review@latest
 ```
 
-## 使用方法
+## Usage
 
 ```
-steam-review [オプション]
+steam-review [options]
 ```
 
 ### Options
@@ -103,7 +103,7 @@ review:
 Review text
 ```
 
-### JSON形式 (-json オプション)
+### JSON形式 (-json option)
 
 ```json
 [
