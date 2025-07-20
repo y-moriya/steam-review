@@ -702,7 +702,7 @@ func main() {
 	
 	var savedFiles []string
 	if config.SplitByLang {
-		files, err := SaveReviewsByLanguage(reviews, baseFilename, config.OutputDir, config.Verbose, config.OutputTxt)
+		files, err := SaveReviewsByLanguage(reviews, baseFilename, config.OutputDir, config.Verbose, config.OutputJSON)
 		if err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
 		}
@@ -713,7 +713,7 @@ func main() {
 			filename = config.OutputDir + "/" + filename
 		}
 		
-		if savedFile, err := SaveReviewsToFile(reviews, filename, config.OutputTxt); err != nil {
+		if savedFile, err := SaveReviewsToFile(reviews, filename, config.OutputJSON); err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
 		} else {
 			savedFiles = append(savedFiles, savedFile)
