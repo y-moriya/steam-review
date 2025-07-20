@@ -15,14 +15,14 @@ import (
 
 // SteamReviewResponse Steam APIからのレスポンス構造体
 type SteamReviewResponse struct {
-	Success      int    `json:"success"`
+	Success      int `json:"success"`
 	QuerySummary struct {
-		NumReviews      int     `json:"num_reviews"`
-		ReviewScore     int     `json:"review_score"`
-		ReviewScoreDesc string  `json:"review_score_desc"`
-		TotalPositive   int     `json:"total_positive"`
-		TotalNegative   int     `json:"total_negative"`
-		TotalReviews    int     `json:"total_reviews"`
+		NumReviews      int    `json:"num_reviews"`
+		ReviewScore     int    `json:"review_score"`
+		ReviewScoreDesc string `json:"review_score_desc"`
+		TotalPositive   int    `json:"total_positive"`
+		TotalNegative   int    `json:"total_negative"`
+		TotalReviews    int    `json:"total_reviews"`
 	} `json:"query_summary"`
 	Reviews []SteamReview `json:"reviews"`
 	Cursor  string        `json:"cursor"`
@@ -38,7 +38,7 @@ func (f *FlexibleFloat64) UnmarshalJSON(data []byte) error {
 		*f = FlexibleFloat64(num)
 		return nil
 	}
-	
+
 	// 文字列として試す
 	var str string
 	if err := json.Unmarshal(data, &str); err == nil {
@@ -51,7 +51,7 @@ func (f *FlexibleFloat64) UnmarshalJSON(data []byte) error {
 			return nil
 		}
 	}
-	
+
 	// デフォルト値を設定
 	*f = FlexibleFloat64(0)
 	return nil
@@ -59,69 +59,69 @@ func (f *FlexibleFloat64) UnmarshalJSON(data []byte) error {
 
 // SteamReview 個別のレビュー構造体
 type SteamReview struct {
-	RecommendationID     string          `json:"recommendationid"`
-	Author              SteamAuthor     `json:"author"`
-	Language            string          `json:"language"`
-	Review              string          `json:"review"`
-	TimestampCreated    int64           `json:"timestamp_created"`
-	TimestampUpdated    int64           `json:"timestamp_updated"`
-	VotedUp             bool            `json:"voted_up"`
-	VotesUp             int             `json:"votes_up"`
-	VotesFunny          int             `json:"votes_funny"`
-	WeightedVoteScore   FlexibleFloat64 `json:"weighted_vote_score"`
-	CommentCount        int             `json:"comment_count"`
-	SteamPurchase       bool            `json:"steam_purchase"`
-	ReceivedForFree     bool            `json:"received_for_free"`
-	WrittenDuringEA     bool            `json:"written_during_early_access"`
-	DeveloperResponse   string          `json:"developer_response"`
-	TimestampDevResp    int64           `json:"timestamp_dev_responded"`
+	RecommendationID  string          `json:"recommendationid"`
+	Author            SteamAuthor     `json:"author"`
+	Language          string          `json:"language"`
+	Review            string          `json:"review"`
+	TimestampCreated  int64           `json:"timestamp_created"`
+	TimestampUpdated  int64           `json:"timestamp_updated"`
+	VotedUp           bool            `json:"voted_up"`
+	VotesUp           int             `json:"votes_up"`
+	VotesFunny        int             `json:"votes_funny"`
+	WeightedVoteScore FlexibleFloat64 `json:"weighted_vote_score"`
+	CommentCount      int             `json:"comment_count"`
+	SteamPurchase     bool            `json:"steam_purchase"`
+	ReceivedForFree   bool            `json:"received_for_free"`
+	WrittenDuringEA   bool            `json:"written_during_early_access"`
+	DeveloperResponse string          `json:"developer_response"`
+	TimestampDevResp  int64           `json:"timestamp_dev_responded"`
 }
 
 // SteamAuthor レビュー作者の構造体
 type SteamAuthor struct {
-	SteamID                string `json:"steamid"`
-	NumGamesOwned         int    `json:"num_games_owned"`
-	NumReviews            int    `json:"num_reviews"`
-	PlayTimeForever       int    `json:"playtime_forever"`
-	PlayTimeLastTwoWeeks  int    `json:"playtime_last_two_weeks"`
-	PlayTimeAtReview      int    `json:"playtime_at_review"`
-	LastPlayed            int64  `json:"last_played"`
+	SteamID              string `json:"steamid"`
+	NumGamesOwned        int    `json:"num_games_owned"`
+	NumReviews           int    `json:"num_reviews"`
+	PlayTimeForever      int    `json:"playtime_forever"`
+	PlayTimeLastTwoWeeks int    `json:"playtime_last_two_weeks"`
+	PlayTimeAtReview     int    `json:"playtime_at_review"`
+	LastPlayed           int64  `json:"last_played"`
 }
 
 // ReviewData 最終的なレビューデータ構造体
 type ReviewData struct {
-	RecommendationID      string      `json:"recommendation_id"`
-	Author               AuthorData   `json:"author"`
-	Language             string       `json:"language"`
-	Review               string       `json:"review"`
-	TimestampCreated     int64        `json:"timestamp_created"`
-	TimestampUpdated     int64        `json:"timestamp_updated"`
-	VotedUp              bool         `json:"voted_up"`
-	VotesUp              int          `json:"votes_up"`
-	VotesFunny           int          `json:"votes_funny"`
-	WeightedScore        float64      `json:"weighted_vote_score"`
-	CommentCount         int          `json:"comment_count"`
-	SteamPurchase        bool         `json:"steam_purchase"`
-	ReceivedForFree      bool         `json:"received_for_free"`
-	WrittenDuringEA      bool         `json:"written_during_early_access"`
-	DeveloperResponse    string       `json:"developer_response,omitempty"`
-	TimestampDevResponse int64        `json:"timestamp_dev_responded,omitempty"`
+	RecommendationID     string     `json:"recommendation_id"`
+	Author               AuthorData `json:"author"`
+	Language             string     `json:"language"`
+	Review               string     `json:"review"`
+	TimestampCreated     int64      `json:"timestamp_created"`
+	TimestampUpdated     int64      `json:"timestamp_updated"`
+	VotedUp              bool       `json:"voted_up"`
+	VotesUp              int        `json:"votes_up"`
+	VotesFunny           int        `json:"votes_funny"`
+	WeightedScore        float64    `json:"weighted_vote_score"`
+	CommentCount         int        `json:"comment_count"`
+	SteamPurchase        bool       `json:"steam_purchase"`
+	ReceivedForFree      bool       `json:"received_for_free"`
+	WrittenDuringEA      bool       `json:"written_during_early_access"`
+	DeveloperResponse    string     `json:"developer_response,omitempty"`
+	TimestampDevResponse int64      `json:"timestamp_dev_responded,omitempty"`
 }
 
 // AuthorData 作成者データ構造体
 type AuthorData struct {
-	SteamID                 string `json:"steam_id"`
-	NumGamesOwned          int    `json:"num_games_owned"`
-	NumReviews             int    `json:"num_reviews"`
-	PlaytimeForever        int    `json:"playtime_forever"`
-	PlaytimeLastTwoWeeks   int    `json:"playtime_last_two_weeks"`
-	PlaytimeAtReview       int    `json:"playtime_at_review"`
-	LastPlayed             int64  `json:"last_played"`
+	SteamID              string `json:"steam_id"`
+	NumGamesOwned        int    `json:"num_games_owned"`
+	NumReviews           int    `json:"num_reviews"`
+	PlaytimeForever      int    `json:"playtime_forever"`
+	PlaytimeLastTwoWeeks int    `json:"playtime_last_two_weeks"`
+	PlaytimeAtReview     int    `json:"playtime_at_review"`
+	LastPlayed           int64  `json:"last_played"`
 }
 
 const (
 	// バージョン情報
-	Version = "v0.3.1"     // プログラムのバージョン
+	Version = "v0.3.1"                 // プログラムのバージョン
 	AppName = "Steam Reviews CLI Tool" // プログラム名
 
 	// レビューのフィルター
@@ -134,18 +134,18 @@ const (
 	FileExtTXT  = ".txt"  // テキスト形式のファイル拡張子
 )
 
-	// コマンドライン引数の設定
+// コマンドライン引数の設定
 type Config struct {
-	AppID        string
-	GameName     string
-	MaxReviews   int
-	Languages    []string
-	OutputDir    string
-	Verbose      bool
-	SplitByLang  bool
-	OutputJSON   bool
-	Filter      string   // レビューのフィルター
-}// GetAppIDByName ゲーム名からSteam App IDを取得
+	AppID       string
+	GameName    string
+	MaxReviews  int
+	Languages   []string
+	OutputDir   string
+	Verbose     bool
+	SplitByLang bool
+	OutputJSON  bool
+	Filter      string // レビューのフィルター
+} // GetAppIDByName ゲーム名からSteam App IDを取得
 func GetAppIDByName(gameName string) (string, error) {
 	url := "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
 	resp, err := http.Get(url)
@@ -162,11 +162,11 @@ func GetAppIDByName(gameName string) (string, error) {
 			} `json:"apps"`
 		} `json:"applist"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "", fmt.Errorf("JSONデコードエラー: %w", err)
 	}
-	
+
 	for _, app := range result.Applist.Apps {
 		if strings.EqualFold(app.Name, gameName) {
 			return fmt.Sprintf("%d", app.AppID), nil
@@ -202,7 +202,7 @@ func setFilter(params url.Values, filter string) {
 		params.Set("filter", "updated")
 		params.Set("day_range", "0") // updatedの場合はday_rangeは影響しない
 	default:
-		params.Set("filter", "all") // デフォルトは有用性による並び替え
+		params.Set("filter", "all")    // デフォルトは有用性による並び替え
 		params.Set("day_range", "365") // allフィルターの場合、365日（最大値）を設定
 	}
 }
@@ -210,7 +210,7 @@ func setFilter(params url.Values, filter string) {
 // FetchReviewsFromSteam Steam APIから直接レビューを取得
 func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, filter string, languages []string) (*SteamReviewResponse, error) {
 	baseURL := "https://store.steampowered.com/appreviews/" + appID
-	
+
 	params := url.Values{}
 	params.Set("json", "1")
 	params.Set("cursor", cursor)
@@ -220,28 +220,28 @@ func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, filter s
 
 	setLanguageFilter(params, languages)
 	setFilter(params, filter)
-	
+
 	fullURL := baseURL + "?" + params.Encode()
-	
+
 	resp, err := http.Get(fullURL)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP リクエストエラー: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("HTTP エラー: %d", resp.StatusCode)
 	}
-	
+
 	var result SteamReviewResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("JSON デコードエラー: %w", err)
 	}
-	
+
 	if result.Success != 1 {
 		return nil, fmt.Errorf("Steam API エラー: success = %d", result.Success)
 	}
-	
+
 	return &result, nil
 }
 
@@ -250,13 +250,13 @@ func ConvertSteamReview(sr SteamReview) ReviewData {
 	return ReviewData{
 		RecommendationID: sr.RecommendationID,
 		Author: AuthorData{
-			SteamID:                sr.Author.SteamID,
-			NumGamesOwned:         sr.Author.NumGamesOwned,
-			NumReviews:            sr.Author.NumReviews,
-			PlaytimeForever:       sr.Author.PlayTimeForever,
-			PlaytimeLastTwoWeeks:  sr.Author.PlayTimeLastTwoWeeks,
-			PlaytimeAtReview:      sr.Author.PlayTimeAtReview,
-			LastPlayed:            sr.Author.LastPlayed,
+			SteamID:              sr.Author.SteamID,
+			NumGamesOwned:        sr.Author.NumGamesOwned,
+			NumReviews:           sr.Author.NumReviews,
+			PlaytimeForever:      sr.Author.PlayTimeForever,
+			PlaytimeLastTwoWeeks: sr.Author.PlayTimeLastTwoWeeks,
+			PlaytimeAtReview:     sr.Author.PlayTimeAtReview,
+			LastPlayed:           sr.Author.LastPlayed,
 		},
 		Language:             sr.Language,
 		Review:               sr.Review,
@@ -275,31 +275,31 @@ func ConvertSteamReview(sr SteamReview) ReviewData {
 	}
 }
 
-	// FilterReviewsByLanguage 指定された言語のレビューのみをフィルタ
+// FilterReviewsByLanguage 指定された言語のレビューのみをフィルタ
 func FilterReviewsByLanguage(reviews []ReviewData, languages []string) []ReviewData {
 	if len(languages) == 0 {
 		return reviews
 	}
-	
+
 	// "all" が指定されている場合はすべてのレビューを返す
 	for _, lang := range languages {
 		if strings.ToLower(lang) == "all" {
 			return reviews
 		}
 	}
-	
+
 	langSet := make(map[string]bool)
 	for _, lang := range languages {
 		langSet[strings.ToLower(lang)] = true
 	}
-	
+
 	var filtered []ReviewData
 	for _, review := range reviews {
 		if langSet[strings.ToLower(review.Language)] {
 			filtered = append(filtered, review)
 		}
 	}
-	
+
 	return filtered
 }
 
@@ -321,28 +321,28 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 			langSet[strings.ToLower(lang)] = true
 		}
 	}
-	
+
 	if verbose {
 		log.Printf("App ID %s のレビュー取得を開始します", appID)
 	}
-	
+
 	for {
 		if verbose {
 			log.Printf("現在のレビュー数: %d, カーソル: %s", len(allReviews), cursor)
 		}
-		
+
 		resp, err := FetchReviewsFromSteam(appID, cursor, numPerPage, filter, languages)
 		if err != nil {
 			return nil, fmt.Errorf("レビュー取得エラー: %w", err)
 		}
-		
+
 		if len(resp.Reviews) == 0 {
 			if verbose {
 				log.Println("これ以上レビューがありません")
 			}
 			break
 		}
-		
+
 		for _, sr := range resp.Reviews {
 			// 言語フィルタの適用
 			if checkLanguage && !langSet[strings.ToLower(sr.Language)] {
@@ -351,7 +351,7 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 
 			rd := ConvertSteamReview(sr)
 			allReviews = append(allReviews, rd)
-			
+
 			if maxReviews > 0 && len(allReviews) >= maxReviews {
 				if verbose {
 					log.Printf("最大レビュー数 %d に到達しました", maxReviews)
@@ -359,20 +359,20 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 				return allReviews[:maxReviews], nil
 			}
 		}
-		
+
 		if resp.Cursor == cursor || resp.Cursor == "" {
 			if verbose {
 				log.Println("カーソルが変更されませんでした。終了します")
 			}
 			break
 		}
-		
+
 		cursor = resp.Cursor
-		
+
 		// レート制限対策
 		time.Sleep(1 * time.Second)
 	}
-	
+
 	if verbose {
 		log.Printf("合計 %d 件のレビューを取得しました", len(allReviews))
 	}
@@ -435,7 +435,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 	var savedFiles []string
 	// 言語別にレビューを分類
 	reviewsByLanguage := make(map[string][]ReviewData)
-	
+
 	for _, review := range reviews {
 		lang := review.Language
 		if lang == "" {
@@ -443,20 +443,20 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 		}
 		reviewsByLanguage[lang] = append(reviewsByLanguage[lang], review)
 	}
-	
+
 	// ファイル拡張子を決定
 	ext := ".txt"
 	if outputJSON {
 		ext = ".json"
 	}
-	
+
 	// 言語別にファイル保存
 	for lang, langReviews := range reviewsByLanguage {
 		filename := strings.TrimSuffix(baseFilename, FileExtJSON) + "_" + lang + ext
 		if outputDir != "" {
 			filename = outputDir + "/" + filename
 		}
-		
+
 		if savedFile, err := SaveReviewsToFile(langReviews, filename, outputJSON); err != nil {
 			log.Printf("言語 %s のファイル保存エラー: %v", lang, err)
 			continue
@@ -467,13 +467,13 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 			}
 		}
 	}
-	
+
 	// 全体のサマリーも保存
 	summaryFilename := strings.TrimSuffix(baseFilename, FileExtJSON) + "_all_languages" + ext
 	if outputDir != "" {
 		summaryFilename = outputDir + "/" + summaryFilename
 	}
-	
+
 	if savedFile, err := SaveReviewsToFile(reviews, summaryFilename, outputJSON); err != nil {
 		return nil, fmt.Errorf("サマリーファイル保存エラー: %w", err)
 	} else {
@@ -482,7 +482,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 			log.Printf("全言語統合ファイルを保存: %s (%d件)", summaryFilename, len(reviews))
 		}
 	}
-	
+
 	return savedFiles, nil
 }
 
@@ -505,12 +505,12 @@ func PrintReviewStats(reviews []ReviewData, gameName string) {
 		fmt.Printf("レビューが見つかりませんでした\n")
 		return
 	}
-	
+
 	totalReviews := len(reviews)
 	positiveReviews := 0
 	languageCounts := make(map[string]int)
 	languagePositive := make(map[string]int)
-	
+
 	for _, review := range reviews {
 		if review.VotedUp {
 			positiveReviews++
@@ -524,24 +524,24 @@ func PrintReviewStats(reviews []ReviewData, gameName string) {
 			languagePositive[lang]++
 		}
 	}
-	
+
 	negativeReviews := totalReviews - positiveReviews
 	positivePercent := float64(positiveReviews) / float64(totalReviews) * 100
 	negativePercent := float64(negativeReviews) / float64(totalReviews) * 100
-	
+
 	fmt.Printf("\n=== レビュー統計 ===\n")
 	fmt.Printf("ゲーム: %s\n", gameName)
 	fmt.Printf("総レビュー数: %d\n", totalReviews)
 	fmt.Printf("肯定的: %d (%.1f%%)\n", positiveReviews, positivePercent)
 	fmt.Printf("否定的: %d (%.1f%%)\n", negativeReviews, negativePercent)
-	
+
 	fmt.Printf("\n言語別レビュー統計:\n")
 	for lang, count := range languageCounts {
 		positive := languagePositive[lang]
 		negative := count - positive
 		percent := float64(count) / float64(totalReviews) * 100
 		positiveRate := float64(positive) / float64(count) * 100
-		fmt.Printf("  %s: %d件 (%.1f%%) - 肯定的: %d件 (%.1f%%), 否定的: %d件\n", 
+		fmt.Printf("  %s: %d件 (%.1f%%) - 肯定的: %d件 (%.1f%%), 否定的: %d件\n",
 			lang, count, percent, positive, positiveRate, negative)
 	}
 }
@@ -619,7 +619,7 @@ func main() {
 	flag.IntVar(&config.MaxReviews, "max", 100, "最大取得レビュー数 (0で無制限)")
 	flag.StringVar(&languageStr, "lang", "japanese", "取得する言語 (カンマ区切り, デフォルト: japanese)")
 	flag.StringVar(&config.OutputDir, "output", "output", "出力ディレクトリ")
-	flag.StringVar(&config.Filter, "filter", FilterAll, 
+	flag.StringVar(&config.Filter, "filter", FilterAll,
 		"レビューのフィルター (recent: 作成日時順, updated: 更新日時順, all: 有用性順(デフォルト))")
 	flag.BoolVar(&config.SplitByLang, "split", false, "言語別にファイルを分けて保存")
 	flag.BoolVar(&config.OutputJSON, "json", false, "出力ファイルをJSON形式(.json)にする (デフォルト: テキスト形式)")
@@ -699,7 +699,7 @@ func main() {
 		ext = ".json"
 	}
 	baseFilename := fmt.Sprintf("steam_reviews_%s%s", appID, ext)
-	
+
 	var savedFiles []string
 	if config.SplitByLang {
 		files, err := SaveReviewsByLanguage(reviews, baseFilename, config.OutputDir, config.Verbose, config.OutputJSON)
@@ -712,7 +712,7 @@ func main() {
 		if config.OutputDir != "" {
 			filename = config.OutputDir + "/" + filename
 		}
-		
+
 		if savedFile, err := SaveReviewsToFile(reviews, filename, config.OutputJSON); err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
 		} else {
