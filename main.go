@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -118,6 +119,18 @@ type AuthorData struct {
 	LastPlayed             int64  `json:"last_played"`
 }
 
+// コマンドライン引数の設定
+type Config struct {
+	AppID        string
+	GameName     string
+	MaxReviews   int
+	Languages    []string
+	OutputDir    string
+	Verbose      bool
+	SplitByLang  bool
+	OutputTxt    bool
+}
+
 // GetAppIDByName ゲーム名からSteam App IDを取得
 func GetAppIDByName(gameName string) (string, error) {
 	url := "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
@@ -164,8 +177,6 @@ func FetchReviewsFromSteam(appID string, cursor string, numPerPage int) (*SteamR
 	
 	fullURL := baseURL + "?" + params.Encode()
 	
-	log.Printf("リクエストURL: %s", fullURL)
-	
 	resp, err := http.Get(fullURL)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP リクエストエラー: %w", err)
@@ -208,7 +219,7 @@ func ConvertSteamReview(sr SteamReview) ReviewData {
 		VotedUp:              sr.VotedUp,
 		VotesUp:              sr.VotesUp,
 		VotesFunny:           sr.VotesFunny,
-		WeightedScore:        float64(sr.WeightedVoteScore), // FlexibleFloat64 から float64 に変換
+		WeightedScore:        float64(sr.WeightedVoteScore),
 		CommentCount:         sr.CommentCount,
 		SteamPurchase:        sr.SteamPurchase,
 		ReceivedForFree:      sr.ReceivedForFree,
@@ -218,16 +229,61 @@ func ConvertSteamReview(sr SteamReview) ReviewData {
 	}
 }
 
+	// FilterReviewsByLanguage 指定された言語のレビューのみをフィルタ
+func FilterReviewsByLanguage(reviews []ReviewData, languages []string) []ReviewData {
+	if len(languages) == 0 {
+		return reviews
+	}
+	
+	// "all" が指定されている場合はすべてのレビューを返す
+	for _, lang := range languages {
+		if strings.ToLower(lang) == "all" {
+			return reviews
+		}
+	}
+	
+	langSet := make(map[string]bool)
+	for _, lang := range languages {
+		langSet[strings.ToLower(lang)] = true
+	}
+	
+	var filtered []ReviewData
+	for _, review := range reviews {
+		if langSet[strings.ToLower(review.Language)] {
+			filtered = append(filtered, review)
+		}
+	}
+	
+	return filtered
+}
+
 // FetchAllReviews 指定されたApp IDのレビューを取得
-func FetchAllReviews(appID string, maxReviews int) ([]ReviewData, error) {
+func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []string) ([]ReviewData, error) {
 	var allReviews []ReviewData
 	cursor := "*"
 	numPerPage := 100
+
+	// 言語フィルタの準備
+	langSet := make(map[string]bool)
+	checkLanguage := len(languages) > 0
+	if checkLanguage {
+		for _, lang := range languages {
+			if strings.ToLower(lang) == "all" {
+				checkLanguage = false
+				break
+			}
+			langSet[strings.ToLower(lang)] = true
+		}
+	}
 	
-	log.Printf("App ID %s のレビュー取得を開始します", appID)
+	if verbose {
+		log.Printf("App ID %s のレビュー取得を開始します", appID)
+	}
 	
 	for {
-		log.Printf("現在のレビュー数: %d, カーソル: %s", len(allReviews), cursor)
+		if verbose {
+			log.Printf("現在のレビュー数: %d, カーソル: %s", len(allReviews), cursor)
+		}
 		
 		resp, err := FetchReviewsFromSteam(appID, cursor, numPerPage)
 		if err != nil {
@@ -235,22 +291,33 @@ func FetchAllReviews(appID string, maxReviews int) ([]ReviewData, error) {
 		}
 		
 		if len(resp.Reviews) == 0 {
-			log.Println("これ以上レビューがありません")
+			if verbose {
+				log.Println("これ以上レビューがありません")
+			}
 			break
 		}
 		
 		for _, sr := range resp.Reviews {
+			// 言語フィルタの適用
+			if checkLanguage && !langSet[strings.ToLower(sr.Language)] {
+				continue
+			}
+
 			rd := ConvertSteamReview(sr)
 			allReviews = append(allReviews, rd)
 			
 			if maxReviews > 0 && len(allReviews) >= maxReviews {
-				log.Printf("最大レビュー数 %d に到達しました", maxReviews)
-				return allReviews, nil
+				if verbose {
+					log.Printf("最大レビュー数 %d に到達しました", maxReviews)
+				}
+				return allReviews[:maxReviews], nil
 			}
 		}
 		
 		if resp.Cursor == cursor || resp.Cursor == "" {
-			log.Println("カーソルが変更されませんでした。終了します")
+			if verbose {
+				log.Println("カーソルが変更されませんでした。終了します")
+			}
 			break
 		}
 		
@@ -260,31 +327,65 @@ func FetchAllReviews(appID string, maxReviews int) ([]ReviewData, error) {
 		time.Sleep(1 * time.Second)
 	}
 	
-	log.Printf("合計 %d 件のレビューを取得しました", len(allReviews))
+	if verbose {
+		log.Printf("合計 %d 件のレビューを取得しました", len(allReviews))
+	}
 	return allReviews, nil
 }
 
-// SaveReviewsToFile レビューをJSONファイルに保存
-func SaveReviewsToFile(reviews []ReviewData, filename string) error {
+// SaveReviewsToFile レビューをファイルに保存
+func SaveReviewsToFile(reviews []ReviewData, filename string, outputTxt bool) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("ファイル作成エラー: %w", err)
 	}
 	defer file.Close()
 
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
+	if outputTxt {
+		// テキスト形式で保存
+		for i, review := range reviews {
+			fmt.Fprintf(file, "=== レビュー %d ===\n", i+1)
+			fmt.Fprintf(file, "ID: %s\n", review.RecommendationID)
+			fmt.Fprintf(file, "言語: %s\n", review.Language)
+			fmt.Fprintf(file, "評価: ")
+			if review.VotedUp {
+				fmt.Fprintf(file, "肯定的\n")
+			} else {
+				fmt.Fprintf(file, "否定的\n")
+			}
+			fmt.Fprintf(file, "投票数: %d\n", review.VotesUp)
+			fmt.Fprintf(file, "面白い投票: %d\n", review.VotesFunny)
+			fmt.Fprintf(file, "重み付けスコア: %.2f\n", review.WeightedScore)
+			fmt.Fprintf(file, "Steam購入: %t\n", review.SteamPurchase)
+			fmt.Fprintf(file, "プレイ時間: %d分\n", review.Author.PlaytimeAtReview)
+			fmt.Fprintf(file, "作成日時: %s\n", time.Unix(review.TimestampCreated, 0).Format("2006-01-02 15:04:05"))
+			if review.TimestampUpdated > 0 {
+				fmt.Fprintf(file, "更新日時: %s\n", time.Unix(review.TimestampUpdated, 0).Format("2006-01-02 15:04:05"))
+			}
+			fmt.Fprintf(file, "レビュー内容:\n%s\n", review.Review)
+			if review.DeveloperResponse != "" {
+				fmt.Fprintf(file, "\n開発者応答:\n%s\n", review.DeveloperResponse)
+				if review.TimestampDevResponse > 0 {
+					fmt.Fprintf(file, "開発者応答日時: %s\n", time.Unix(review.TimestampDevResponse, 0).Format("2006-01-02 15:04:05"))
+				}
+			}
+			fmt.Fprintf(file, "\n")
+		}
+	} else {
+		// JSON形式で保存
+		encoder := json.NewEncoder(file)
+		encoder.SetIndent("", "  ")
 
-	if err := encoder.Encode(reviews); err != nil {
-		return fmt.Errorf("JSON書き込みエラー: %w", err)
+		if err := encoder.Encode(reviews); err != nil {
+			return fmt.Errorf("JSON書き込みエラー: %w", err)
+		}
 	}
 
-	log.Printf("レビューを %s に保存しました", filename)
 	return nil
 }
 
-// SaveReviewsByLanguage レビューを言語別に分けてJSONファイルに保存
-func SaveReviewsByLanguage(reviews []ReviewData, baseFilename string) error {
+// SaveReviewsByLanguage レビューを言語別に分けてファイルに保存
+func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string, verbose bool, outputTxt bool) error {
 	// 言語別にレビューを分類
 	reviewsByLanguage := make(map[string][]ReviewData)
 	
@@ -296,38 +397,57 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename string) error {
 		reviewsByLanguage[lang] = append(reviewsByLanguage[lang], review)
 	}
 	
+	// ファイル拡張子を決定
+	ext := ".json"
+	if outputTxt {
+		ext = ".txt"
+	}
+	
 	// 言語別にファイル保存
 	for lang, langReviews := range reviewsByLanguage {
-		// ファイル名を生成（拡張子を除去してから言語コードを追加）
-		filename := strings.TrimSuffix(baseFilename, ".json") + "_" + lang + ".json"
+		filename := strings.TrimSuffix(baseFilename, ".json") + "_" + lang + ext
+		if outputDir != "" {
+			filename = outputDir + "/" + filename
+		}
 		
-		if err := SaveReviewsToFile(langReviews, filename); err != nil {
+		if err := SaveReviewsToFile(langReviews, filename, outputTxt); err != nil {
 			log.Printf("言語 %s のファイル保存エラー: %v", lang, err)
 			continue
 		}
 		
-		log.Printf("言語 %s: %d件のレビューを保存", lang, len(langReviews))
+		if verbose {
+			log.Printf("言語 %s: %d件のレビューを %s に保存", lang, len(langReviews), filename)
+		}
 	}
 	
 	// 全体のサマリーも保存
-	summaryFilename := strings.TrimSuffix(baseFilename, ".json") + "_all_languages.json"
-	if err := SaveReviewsToFile(reviews, summaryFilename); err != nil {
+	summaryFilename := strings.TrimSuffix(baseFilename, ".json") + "_all_languages" + ext
+	if outputDir != "" {
+		summaryFilename = outputDir + "/" + summaryFilename
+	}
+	
+	if err := SaveReviewsToFile(reviews, summaryFilename, outputTxt); err != nil {
 		return fmt.Errorf("サマリーファイル保存エラー: %w", err)
 	}
 	
-	log.Printf("全言語統合ファイルを保存: %s (%d件)", summaryFilename, len(reviews))
+	if verbose {
+		log.Printf("全言語統合ファイルを保存: %s (%d件)", summaryFilename, len(reviews))
+	}
 	
 	return nil
 }
 
 // GetReviewsByGameName ゲーム名からレビューを取得
-func GetReviewsByGameName(gameName string, maxReviews int) ([]ReviewData, error) {
+func GetReviewsByGameName(gameName string, maxReviews int, verbose bool) ([]ReviewData, string, error) {
 	appID, err := GetAppIDByName(gameName)
 	if err != nil {
-		return nil, fmt.Errorf("App ID取得エラー: %w", err)
+		return nil, "", fmt.Errorf("App ID取得エラー: %w", err)
 	}
-	log.Printf("ゲーム '%s' (App ID: %s) のレビューを取得します", gameName, appID)
-	return FetchAllReviews(appID, maxReviews)
+	if verbose {
+		log.Printf("ゲーム '%s' (App ID: %s) のレビューを取得します", gameName, appID)
+	}
+	reviews, err := FetchAllReviews(appID, maxReviews, verbose, nil)
+	return reviews, appID, err
 }
 
 // PrintReviewStats レビュー統計を表示
@@ -377,22 +497,162 @@ func PrintReviewStats(reviews []ReviewData, gameName string) {
 	}
 }
 
-func main() {
-	// 使用例1: App IDを直接指定
-	appID := "2089600"
-	maxReviews := 5_000_000
-	
-	log.Printf("App ID %s のレビューを取得中...", appID)
-	reviews, err := FetchAllReviews(appID, maxReviews)
-	if err != nil {
-		log.Printf("レビュー取得エラー: %v", err)
-	} else {
-		// 言語別にファイル保存
-		baseFilename := fmt.Sprintf("steam_reviews_%s.json", appID)
-		if err := SaveReviewsByLanguage(reviews, baseFilename); err != nil {
-			log.Printf("ファイル保存エラー: %v", err)
+// parseLanguages カンマ区切りの言語文字列を配列に変換
+func parseLanguages(langStr string) []string {
+	var languages []string
+	for _, lang := range strings.Split(langStr, ",") {
+		lang = strings.TrimSpace(lang)
+		if lang != "" {
+			languages = append(languages, lang)
 		}
-		PrintReviewStats(reviews, "都市伝説解体センター")
+	}
+	return languages
+}
+
+// printUsage 使用方法を表示
+func printUsage() {
+	fmt.Printf(`Steam Reviews CLI Tool
+
+使用方法:
+  %s [オプション]
+
+オプション:
+  -appid string         Steam App ID (例: 440)
+  -game string          ゲーム名 (例: "Team Fortress 2")
+  -max int             最大取得レビュー数 (デフォルト: 100, 0で無制限)
+  -lang string         取得する言語 (カンマ区切り, デフォルト: japanese, 例: "japanese,english")
+  -output string       出力ディレクトリ (デフォルト: output)
+  -split              言語別にファイルを分けて保存
+  -txt                出力ファイルをテキスト形式(.txt)にする (デフォルト: JSON形式)
+  -verbose            詳細なログを表示
+  -help               このヘルプを表示
+
+使用例:
+  # App IDを指定して日本語レビューを取得（デフォルト）
+  %s -appid 440 -max 500 -verbose
+
+  # ゲーム名で英語レビューを取得
+  %s -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
+
+  # 複数言語のレビューをテキスト形式で取得
+  %s -game "Elden Ring" -lang "japanese,english" -max 300 -split -txt
+
+  # 日本語レビューのみをテキスト形式で保存
+  %s -appid 570 -max 2000 -output ./dota2_reviews -txt -verbose
+
+  # すべての言語のレビューを取得
+  %s -appid 730 -lang "all" -max 1000 -split
+
+注意:
+  - App IDとゲーム名のどちらか一方を指定してください
+  - -lang を指定しない場合、デフォルトで日本語レビューのみを取得します
+  - "all" を指定するとすべての言語のレビューを取得します
+  - 大量のレビューを取得する場合は時間がかかります
+  - Steam APIのレート制限により、リクエスト間に1秒の待機時間があります
+`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+}
+
+func main() {
+	var config Config
+	var languageStr string
+	var help bool
+
+	// コマンドライン引数の定義
+	flag.StringVar(&config.AppID, "appid", "", "Steam App ID")
+	flag.StringVar(&config.GameName, "game", "", "ゲーム名")
+	flag.IntVar(&config.MaxReviews, "max", 100, "最大取得レビュー数 (0で無制限)")
+	flag.StringVar(&languageStr, "lang", "japanese", "取得する言語 (カンマ区切り, デフォルト: japanese)")
+	flag.StringVar(&config.OutputDir, "output", "output", "出力ディレクトリ")
+	flag.BoolVar(&config.SplitByLang, "split", false, "言語別にファイルを分けて保存")
+	flag.BoolVar(&config.OutputTxt, "txt", false, "出力ファイルをテキスト形式(.txt)にする")
+	flag.BoolVar(&config.Verbose, "verbose", false, "詳細なログを表示")
+	flag.BoolVar(&help, "help", false, "ヘルプを表示")
+
+	flag.Parse()
+
+	// ヘルプ表示
+	if help {
+		printUsage()
+		return
 	}
 
+	// 言語設定をパース
+	config.Languages = parseLanguages(languageStr)
+
+	// バリデーション
+	if config.AppID == "" && config.GameName == "" {
+		fmt.Printf("エラー: App ID またはゲーム名を指定してください\n\n")
+		printUsage()
+		os.Exit(1)
+	}
+
+	if config.AppID != "" && config.GameName != "" {
+		fmt.Printf("エラー: App ID とゲーム名の両方を指定することはできません\n\n")
+		printUsage()
+		os.Exit(1)
+	}
+
+	// 出力ディレクトリの作成
+	if config.OutputDir != "" {
+		if err := os.MkdirAll(config.OutputDir, 0755); err != nil {
+			log.Fatalf("出力ディレクトリの作成に失敗しました: %v", err)
+		}
+	}
+
+	var reviews []ReviewData
+	var appID string
+	var gameName string
+	var err error
+
+	// レビュー取得
+	if config.AppID != "" {
+		appID = config.AppID
+		gameName = fmt.Sprintf("App ID %s", appID)
+		if config.Verbose {
+			log.Printf("App ID %s のレビューを取得中...", appID)
+		}
+		reviews, err = FetchAllReviews(appID, config.MaxReviews, config.Verbose, config.Languages)
+	} else {
+		gameName = config.GameName
+		if config.Verbose {
+			log.Printf("ゲーム '%s' のレビューを取得中...", gameName)
+		}
+		reviews, appID, err = GetReviewsByGameName(gameName, config.MaxReviews, config.Verbose)
+	}
+
+	if err != nil {
+		log.Fatalf("レビュー取得エラー: %v", err)
+	}
+
+	if len(reviews) == 0 {
+		log.Printf("レビューが見つかりませんでした")
+		return
+	}
+
+	// ファイル保存
+	ext := ".json"
+	if config.OutputTxt {
+		ext = ".txt"
+	}
+	baseFilename := fmt.Sprintf("steam_reviews_%s%s", appID, ext)
+	
+	if config.SplitByLang {
+		if err := SaveReviewsByLanguage(reviews, baseFilename, config.OutputDir, config.Verbose, config.OutputTxt); err != nil {
+			log.Printf("ファイル保存エラー: %v", err)
+		}
+	} else {
+		filename := baseFilename
+		if config.OutputDir != "" {
+			filename = config.OutputDir + "/" + filename
+		}
+		
+		if err := SaveReviewsToFile(reviews, filename, config.OutputTxt); err != nil {
+			log.Printf("ファイル保存エラー: %v", err)
+		} else if config.Verbose {
+			log.Printf("レビューを %s に保存しました", filename)
+		}
+	}
+
+	// 統計情報を表示
+	PrintReviewStats(reviews, gameName)
 }
