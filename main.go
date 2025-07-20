@@ -382,10 +382,10 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 }
 
 // SaveReviewsToFile レビューをファイルに保存
-func SaveReviewsToFile(reviews []ReviewData, filename string, outputTxt bool) error {
+func SaveReviewsToFile(reviews []ReviewData, filename string, outputTxt bool) (string, error) {
 	file, err := os.Create(filename)
 	if err != nil {
-		return fmt.Errorf("ファイル作成エラー: %w", err)
+		return "", fmt.Errorf("ファイル作成エラー: %w", err)
 	}
 	defer file.Close()
 
@@ -425,15 +425,16 @@ func SaveReviewsToFile(reviews []ReviewData, filename string, outputTxt bool) er
 		encoder.SetIndent("", "  ")
 
 		if err := encoder.Encode(reviews); err != nil {
-			return fmt.Errorf("JSON書き込みエラー: %w", err)
+			return "", fmt.Errorf("JSON書き込みエラー: %w", err)
 		}
 	}
 
-	return nil
+	return filename, nil
 }
 
 // SaveReviewsByLanguage レビューを言語別に分けてファイルに保存
-func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string, verbose bool, outputTxt bool) error {
+func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string, verbose bool, outputTxt bool) ([]string, error) {
+	var savedFiles []string
 	// 言語別にレビューを分類
 	reviewsByLanguage := make(map[string][]ReviewData)
 	
@@ -458,13 +459,14 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 			filename = outputDir + "/" + filename
 		}
 		
-		if err := SaveReviewsToFile(langReviews, filename, outputTxt); err != nil {
+		if savedFile, err := SaveReviewsToFile(langReviews, filename, outputTxt); err != nil {
 			log.Printf("言語 %s のファイル保存エラー: %v", lang, err)
 			continue
-		}
-		
-		if verbose {
-			log.Printf("言語 %s: %d件のレビューを %s に保存", lang, len(langReviews), filename)
+		} else {
+			savedFiles = append(savedFiles, savedFile)
+			if verbose {
+				log.Printf("言語 %s: %d件のレビューを %s に保存", lang, len(langReviews), filename)
+			}
 		}
 	}
 	
@@ -474,15 +476,16 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 		summaryFilename = outputDir + "/" + summaryFilename
 	}
 	
-	if err := SaveReviewsToFile(reviews, summaryFilename, outputTxt); err != nil {
-		return fmt.Errorf("サマリーファイル保存エラー: %w", err)
+	if savedFile, err := SaveReviewsToFile(reviews, summaryFilename, outputTxt); err != nil {
+		return nil, fmt.Errorf("サマリーファイル保存エラー: %w", err)
+	} else {
+		savedFiles = append(savedFiles, savedFile)
+		if verbose {
+			log.Printf("全言語統合ファイルを保存: %s (%d件)", summaryFilename, len(reviews))
+		}
 	}
 	
-	if verbose {
-		log.Printf("全言語統合ファイルを保存: %s (%d件)", summaryFilename, len(reviews))
-	}
-	
-	return nil
+	return savedFiles, nil
 }
 
 // GetReviewsByGameName ゲーム名からレビューを取得
@@ -686,22 +689,35 @@ func main() {
 	}
 	baseFilename := fmt.Sprintf("steam_reviews_%s%s", appID, ext)
 	
+	var savedFiles []string
 	if config.SplitByLang {
-		if err := SaveReviewsByLanguage(reviews, baseFilename, config.OutputDir, config.Verbose, config.OutputTxt); err != nil {
+		files, err := SaveReviewsByLanguage(reviews, baseFilename, config.OutputDir, config.Verbose, config.OutputTxt)
+		if err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
 		}
+		savedFiles = files
 	} else {
 		filename := baseFilename
 		if config.OutputDir != "" {
 			filename = config.OutputDir + "/" + filename
 		}
 		
-		if err := SaveReviewsToFile(reviews, filename, config.OutputTxt); err != nil {
+		if savedFile, err := SaveReviewsToFile(reviews, filename, config.OutputTxt); err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
-		} else if config.Verbose {
-			log.Printf("レビューを %s に保存しました", filename)
+		} else {
+			savedFiles = append(savedFiles, savedFile)
+			if config.Verbose {
+				log.Printf("レビューを %s に保存しました", filename)
+			}
 		}
 	}
+
+	// 保存したファイル一覧を表示
+	fmt.Printf("\n=== 保存したファイル一覧 ===\n")
+	for _, file := range savedFiles {
+		fmt.Printf("- %s\n", file)
+	}
+	fmt.Println()
 
 	// 統計情報を表示
 	PrintReviewStats(reviews, gameName)
