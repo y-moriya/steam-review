@@ -119,8 +119,12 @@ type AuthorData struct {
 	LastPlayed             int64  `json:"last_played"`
 }
 
-// レビューのソート順
 const (
+	// バージョン情報
+	Version = "v0.1.2"     // プログラムのバージョン
+	AppName = "Steam Reviews CLI Tool" // プログラム名
+
+	// レビューのソート順
 	SortCreatedDesc  = "created_desc"   // 作成日時の降順
 	SortCreatedAsc   = "created_asc"    // 作成日時の昇順
 	SortUpdatedDesc  = "updated_desc"   // 更新日時の降順
@@ -562,7 +566,7 @@ func parseLanguages(langStr string) []string {
 
 // printUsage 使用方法を表示
 func printUsage() {
-	fmt.Printf(`Steam Reviews CLI Tool
+	fmt.Printf(`%s version %s
 
 使用方法:
   %s [オプション]
@@ -577,6 +581,7 @@ func printUsage() {
   -txt                出力ファイルをテキスト形式(.txt)にする (デフォルト: JSON形式)
   -verbose            詳細なログを表示
   -help               このヘルプを表示
+  -version            バージョン情報を表示
 
 使用例:
   # App IDを指定して日本語レビューを取得（デフォルト）
@@ -600,15 +605,17 @@ func printUsage() {
   - "all" を指定するとすべての言語のレビューを取得します
   - 大量のレビューを取得する場合は時間がかかります
   - Steam APIのレート制限により、リクエスト間に1秒の待機時間があります
-`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+`, AppName, Version, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }
 
 func main() {
 	var config Config
 	var languageStr string
 	var help bool
+	var showVersion bool
 
 	// コマンドライン引数の定義
+	flag.BoolVar(&showVersion, "version", false, "バージョン情報を表示")
 	flag.StringVar(&config.AppID, "appid", "", "Steam App ID")
 	flag.StringVar(&config.GameName, "game", "", "ゲーム名")
 	flag.IntVar(&config.MaxReviews, "max", 100, "最大取得レビュー数 (0で無制限)")
@@ -622,6 +629,12 @@ func main() {
 	flag.BoolVar(&help, "help", false, "ヘルプを表示")
 
 	flag.Parse()
+
+	// バージョン情報の表示
+	if showVersion {
+		fmt.Printf("%s version %s\n", AppName, Version)
+		return
+	}
 
 	// ヘルプ表示
 	if help {
