@@ -121,7 +121,7 @@ type AuthorData struct {
 
 const (
 	// バージョン情報
-	Version = "v0.3.1"                 // プログラムのバージョン
+	Version = "v0.4.0"                 // プログラムのバージョン
 	AppName = "Steam Reviews CLI Tool" // プログラム名
 
 	// レビューのフィルター
@@ -392,27 +392,27 @@ func SaveReviewsToFile(reviews []ReviewData, filename string, outputJSON bool) (
 		for i, review := range reviews {
 			fmt.Fprintf(file, "=== レビュー %d ===\n", i+1)
 			fmt.Fprintf(file, "ID: %s\n", review.RecommendationID)
-			fmt.Fprintf(file, "言語: %s\n", review.Language)
-			fmt.Fprintf(file, "評価: ")
+			fmt.Fprintf(file, "language: %s\n", review.Language)
+			fmt.Fprintf(file, "voted_up: ")
 			if review.VotedUp {
-				fmt.Fprintf(file, "肯定的\n")
+				fmt.Fprintf(file, "true\n")
 			} else {
-				fmt.Fprintf(file, "否定的\n")
+				fmt.Fprintf(file, "false\n")
 			}
-			fmt.Fprintf(file, "投票数: %d\n", review.VotesUp)
-			fmt.Fprintf(file, "面白い投票: %d\n", review.VotesFunny)
-			fmt.Fprintf(file, "重み付けスコア: %.2f\n", review.WeightedScore)
-			fmt.Fprintf(file, "Steam購入: %t\n", review.SteamPurchase)
-			fmt.Fprintf(file, "プレイ時間: %d分\n", review.Author.PlaytimeAtReview)
-			fmt.Fprintf(file, "作成日時: %s\n", time.Unix(review.TimestampCreated, 0).Format("2006-01-02 15:04:05"))
+			fmt.Fprintf(file, "votes_up: %d\n", review.VotesUp)
+			fmt.Fprintf(file, "votes_funny: %d\n", review.VotesFunny)
+			fmt.Fprintf(file, "weighted_score: %.2f\n", review.WeightedScore)
+			fmt.Fprintf(file, "steam_purchase: %t\n", review.SteamPurchase)
+			fmt.Fprintf(file, "playtime: %d分\n", review.Author.PlaytimeAtReview)
+			fmt.Fprintf(file, "created_at: %s\n", time.Unix(review.TimestampCreated, 0).Format("2006-01-02 15:04:05"))
 			if review.TimestampUpdated > 0 {
-				fmt.Fprintf(file, "更新日時: %s\n", time.Unix(review.TimestampUpdated, 0).Format("2006-01-02 15:04:05"))
+				fmt.Fprintf(file, "updated_at: %s\n", time.Unix(review.TimestampUpdated, 0).Format("2006-01-02 15:04:05"))
 			}
-			fmt.Fprintf(file, "レビュー内容:\n%s\n", review.Review)
+			fmt.Fprintf(file, "review:\n%s\n", review.Review)
 			if review.DeveloperResponse != "" {
-				fmt.Fprintf(file, "\n開発者応答:\n%s\n", review.DeveloperResponse)
+				fmt.Fprintf(file, "developer_response:\n%s\n", review.DeveloperResponse)
 				if review.TimestampDevResponse > 0 {
-					fmt.Fprintf(file, "開発者応答日時: %s\n", time.Unix(review.TimestampDevResponse, 0).Format("2006-01-02 15:04:05"))
+					fmt.Fprintf(file, "developer_response_timestamp: %s\n", time.Unix(review.TimestampDevResponse, 0).Format("2006-01-02 15:04:05"))
 				}
 			}
 			fmt.Fprintf(file, "\n")

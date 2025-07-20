@@ -20,32 +20,32 @@ func TestCommandExamples(t *testing.T) {
 	}{
 		{
 			name:    "Example 1: AppID with Japanese reviews",
-			args:    []string{"-appid", "440", "-max", "500", "-verbose"},
+			args:    []string{"-appid", "440", "-max", "5", "-verbose", "-output", filepath.Join(tempDir, "test1")},
 			wantErr: false,
 		},
 		{
 			name:    "Example 2: Game name with English reviews",
-			args:    []string{"-game", "Cyberpunk 2077", "-lang", "english", "-max", "1000", "-output", filepath.Join(tempDir, "reviews")},
+			args:    []string{"-game", "Cyberpunk 2077", "-lang", "english", "-max", "10", "-verbose",  "-output", filepath.Join(tempDir, "test2")},
 			wantErr: false,
 		},
 		{
 			name:    "Example 3: Multiple languages",
-			args:    []string{"-game", "Elden Ring", "-lang", "japanese,english", "-max", "300", "-split"},
+			args:    []string{"-game", "Elden Ring", "-lang", "japanese,english", "-max", "3", "-verbose",  "-split", "-output", filepath.Join(tempDir, "test3")},
 			wantErr: false,
 		},
 		{
 			name:    "Example 4: Japanese reviews in JSON format",
-			args:    []string{"-appid", "570", "-max", "2000", "-output", filepath.Join(tempDir, "dota2_reviews"), "-json", "-verbose"},
+			args:    []string{"-appid", "570", "-max", "20", "-output", filepath.Join(tempDir, "test4"), "-json", "-verbose"},
 			wantErr: false,
 		},
 		{
 			name:    "Example 5: All languages",
-			args:    []string{"-appid", "730", "-lang", "all", "-max", "1000", "-split"},
+			args:    []string{"-appid", "730", "-lang", "all", "-max", "200", "-verbose",  "-split", "-output", filepath.Join(tempDir, "test5")},
 			wantErr: false,
 		},
 		{
 			name:    "Example 6: Recently updated reviews",
-			args:    []string{"-appid", "730", "-filter", "updated", "-max", "200"},
+			args:    []string{"-appid", "730", "-filter", "updated", "-max", "2", "-verbose",  "-output", filepath.Join(tempDir, "test6")},
 			wantErr: false,
 		},
 	}

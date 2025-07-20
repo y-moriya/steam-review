@@ -85,17 +85,17 @@ steam-review -appid 730 -filter updated -max 200
 
 ```
 === レビュー 1 ===
-ID: 12345678
-言語: japanese
-評価: 肯定的
-投票数: 10
-面白い投票: 5
-重み付けスコア: 0.80
-Steam購入: true
-プレイ時間: 500分
-作成日時: 2023-07-21 00:00:00
-更新日時: 2023-07-21 00:00:00
-レビュー内容:
+ID: 195635539
+language: japanese
+voted_up: true
+votes_up: 54
+votes_funny: 28
+weighted_score: 0.82
+steam_purchase: true
+playtime: 3754分
+created_at: 2025-05-26 00:49:30
+updated_at: 2025-05-26 22:12:04
+review:
 レビュー本文
 ```
 
