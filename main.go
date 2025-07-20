@@ -121,7 +121,7 @@ type AuthorData struct {
 
 const (
 	// バージョン情報
-	Version = "v0.1.2"     // プログラムのバージョン
+	Version = "v0.2.0"     // プログラムのバージョン
 	AppName = "Steam Reviews CLI Tool" // プログラム名
 
 	// レビューのソート順
@@ -135,7 +135,7 @@ const (
 	FileExtTXT  = ".txt"  // テキスト形式のファイル拡張子
 )
 
-// コマンドライン引数の設定
+	// コマンドライン引数の設定
 type Config struct {
 	AppID        string
 	GameName     string
@@ -144,11 +144,9 @@ type Config struct {
 	OutputDir    string
 	Verbose      bool
 	SplitByLang  bool
-	OutputTxt    bool
+	OutputJSON   bool
 	SortOrder    string   // レビューのソート順
-}
-
-// GetAppIDByName ゲーム名からSteam App IDを取得
+}// GetAppIDByName ゲーム名からSteam App IDを取得
 func GetAppIDByName(gameName string) (string, error) {
 	url := "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
 	resp, err := http.Get(url)
@@ -386,14 +384,14 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 }
 
 // SaveReviewsToFile レビューをファイルに保存
-func SaveReviewsToFile(reviews []ReviewData, filename string, outputTxt bool) (string, error) {
+func SaveReviewsToFile(reviews []ReviewData, filename string, outputJSON bool) (string, error) {
 	file, err := os.Create(filename)
 	if err != nil {
 		return "", fmt.Errorf("ファイル作成エラー: %w", err)
 	}
 	defer file.Close()
 
-	if outputTxt {
+	if !outputJSON {
 		// テキスト形式で保存
 		for i, review := range reviews {
 			fmt.Fprintf(file, "=== レビュー %d ===\n", i+1)
@@ -437,7 +435,7 @@ func SaveReviewsToFile(reviews []ReviewData, filename string, outputTxt bool) (s
 }
 
 // SaveReviewsByLanguage レビューを言語別に分けてファイルに保存
-func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string, verbose bool, outputTxt bool) ([]string, error) {
+func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string, verbose bool, outputJSON bool) ([]string, error) {
 	var savedFiles []string
 	// 言語別にレビューを分類
 	reviewsByLanguage := make(map[string][]ReviewData)
@@ -451,9 +449,9 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 	}
 	
 	// ファイル拡張子を決定
-	ext := ".json"
-	if outputTxt {
-		ext = ".txt"
+	ext := ".txt"
+	if outputJSON {
+		ext = ".json"
 	}
 	
 	// 言語別にファイル保存
@@ -463,7 +461,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 			filename = outputDir + "/" + filename
 		}
 		
-		if savedFile, err := SaveReviewsToFile(langReviews, filename, outputTxt); err != nil {
+		if savedFile, err := SaveReviewsToFile(langReviews, filename, outputJSON); err != nil {
 			log.Printf("言語 %s のファイル保存エラー: %v", lang, err)
 			continue
 		} else {
@@ -480,7 +478,7 @@ func SaveReviewsByLanguage(reviews []ReviewData, baseFilename, outputDir string,
 		summaryFilename = outputDir + "/" + summaryFilename
 	}
 	
-	if savedFile, err := SaveReviewsToFile(reviews, summaryFilename, outputTxt); err != nil {
+	if savedFile, err := SaveReviewsToFile(reviews, summaryFilename, outputJSON); err != nil {
 		return nil, fmt.Errorf("サマリーファイル保存エラー: %w", err)
 	} else {
 		savedFiles = append(savedFiles, savedFile)
@@ -578,7 +576,7 @@ func printUsage() {
   -lang string         取得する言語 (カンマ区切り, デフォルト: japanese, 例: "japanese,english")
   -output string       出力ディレクトリ (デフォルト: output)
   -split              言語別にファイルを分けて保存
-  -txt                出力ファイルをテキスト形式(.txt)にする (デフォルト: JSON形式)
+  -json               出力ファイルをJSON形式(.json)にする (デフォルト: テキスト形式)
   -verbose            詳細なログを表示
   -help               このヘルプを表示
   -version            バージョン情報を表示
@@ -590,11 +588,11 @@ func printUsage() {
   # ゲーム名で英語レビューを取得
   %s -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
 
-  # 複数言語のレビューをテキスト形式で取得
-  %s -game "Elden Ring" -lang "japanese,english" -max 300 -split -txt
+  # 複数言語のレビューを取得
+  %s -game "Elden Ring" -lang "japanese,english" -max 300 -split
 
-  # 日本語レビューのみをテキスト形式で保存
-  %s -appid 570 -max 2000 -output ./dota2_reviews -txt -verbose
+  # 日本語レビューをJSON形式で保存
+  %s -appid 570 -max 2000 -output ./dota2_reviews -json -verbose
 
   # すべての言語のレビューを取得
   %s -appid 730 -lang "all" -max 1000 -split
@@ -624,7 +622,7 @@ func main() {
 	flag.StringVar(&config.SortOrder, "sort", SortCreatedDesc, 
 		"レビューのソート順 (created_desc: 作成日時の降順, created_asc: 作成日時の昇順, updated_desc: 更新日時の降順, updated_asc: 更新日時の昇順)")
 	flag.BoolVar(&config.SplitByLang, "split", false, "言語別にファイルを分けて保存")
-	flag.BoolVar(&config.OutputTxt, "txt", false, "出力ファイルをテキスト形式(.txt)にする")
+	flag.BoolVar(&config.OutputJSON, "json", false, "出力ファイルをJSON形式(.json)にする (デフォルト: テキスト形式)")
 	flag.BoolVar(&config.Verbose, "verbose", false, "詳細なログを表示")
 	flag.BoolVar(&help, "help", false, "ヘルプを表示")
 
@@ -696,9 +694,9 @@ func main() {
 	}
 
 	// ファイル保存
-	ext := ".json"
-	if config.OutputTxt {
-		ext = ".txt"
+	ext := ".txt"
+	if config.OutputJSON {
+		ext = ".json"
 	}
 	baseFilename := fmt.Sprintf("steam_reviews_%s%s", appID, ext)
 	

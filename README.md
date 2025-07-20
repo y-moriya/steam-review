@@ -35,10 +35,11 @@ steam-review [オプション]
 | -lang      | 取得する言語 (カンマ区切り) | japanese |
 | -output    | 出力ディレクトリ | output |
 | -split     | 言語別にファイルを分けて保存 | false |
-| -txt       | 出力ファイルをテキスト形式(.txt)にする | false |
+| -json      | 出力ファイルをJSON形式(.json)にする | false |
 | -sort      | レビューのソート順 | created_desc |
 | -verbose   | 詳細なログを表示 | false |
 | -help      | ヘルプを表示 | false |
+| -version   | バージョン情報を表示 | - |
 
 ### ソートオプション
 
@@ -59,14 +60,14 @@ steam-review -appid 440 -max 500 -verbose
 steam-review -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
 ```
 
-3. 複数言語のレビューをテキスト形式で取得
+3. 複数言語のレビューを取得
 ```bash
-steam-review -game "Elden Ring" -lang "japanese,english" -max 300 -split -txt
+steam-review -game "Elden Ring" -lang "japanese,english" -max 300 -split
 ```
 
-4. 日本語レビューのみをテキスト形式で保存
+4. 日本語レビューをJSON形式で保存
 ```bash
-steam-review -appid 570 -max 2000 -output ./dota2_reviews -txt -verbose
+steam-review -appid 570 -max 2000 -output ./dota2_reviews -json -verbose
 ```
 
 5. すべての言語のレビューを取得
@@ -81,7 +82,25 @@ steam-review -appid 730 -sort updated_desc -max 200
 
 ## 出力ファイル
 
-### JSON形式 (デフォルト)
+### テキスト形式 (デフォルト)
+
+```
+=== レビュー 1 ===
+ID: 12345678
+言語: japanese
+評価: 肯定的
+投票数: 10
+面白い投票: 5
+重み付けスコア: 0.80
+Steam購入: true
+プレイ時間: 500分
+作成日時: 2023-07-21 00:00:00
+更新日時: 2023-07-21 00:00:00
+レビュー内容:
+レビュー本文
+```
+
+### JSON形式 (-json オプション)
 
 ```json
 [
@@ -110,24 +129,6 @@ steam-review -appid 730 -sort updated_desc -max 200
     "written_during_early_access": false
   }
 ]
-```
-
-### テキスト形式 (-txt オプション)
-
-```
-=== レビュー 1 ===
-ID: 12345678
-言語: japanese
-評価: 肯定的
-投票数: 10
-面白い投票: 5
-重み付けスコア: 0.80
-Steam購入: true
-プレイ時間: 500分
-作成日時: 2023-07-21 00:00:00
-更新日時: 2023-07-21 00:00:00
-レビュー内容:
-レビュー本文
 ```
 
 ## 注意事項
