@@ -121,7 +121,7 @@ type AuthorData struct {
 
 const (
 	// バージョン情報
-	Version = "v0.3.0"     // プログラムのバージョン
+	Version = "v0.3.1"     // プログラムのバージョン
 	AppName = "Steam Reviews CLI Tool" // プログラム名
 
 	// レビューのフィルター
@@ -192,15 +192,18 @@ func setLanguageFilter(params url.Values, languages []string) {
 	}
 }
 
-// setFilter Steam APIのリクエストパラメータにフィルターを設定
+// setFilter Steam APIのリクエストパラメータにフィルターと関連パラメータを設定
 func setFilter(params url.Values, filter string) {
 	switch filter {
 	case FilterRecent:
 		params.Set("filter", "recent")
+		params.Set("day_range", "0") // recentの場合はday_rangeは影響しない
 	case FilterUpdated:
 		params.Set("filter", "updated")
+		params.Set("day_range", "0") // updatedの場合はday_rangeは影響しない
 	default:
 		params.Set("filter", "all") // デフォルトは有用性による並び替え
+		params.Set("day_range", "365") // allフィルターの場合、365日（最大値）を設定
 	}
 }
 
@@ -212,7 +215,6 @@ func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, filter s
 	params.Set("json", "1")
 	params.Set("cursor", cursor)
 	params.Set("num_per_page", strconv.Itoa(numPerPage))
-	params.Set("day_range", "9223372036854775807")
 	params.Set("review_type", "all")
 	params.Set("purchase_type", "all")
 
