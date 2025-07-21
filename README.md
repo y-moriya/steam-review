@@ -103,7 +103,7 @@ review:
 Review text
 ```
 
-### JSON形式 (-json option)
+### JSON Format (-json option)
 
 ```json
 [
