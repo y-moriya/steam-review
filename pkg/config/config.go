@@ -2,7 +2,7 @@ package config
 
 const (
 	// バージョン情報
-	Version = "v0.5.0"                 // プログラムのバージョン
+	Version = "v0.5.1"                 // プログラムのバージョン
 	AppName = "Steam Reviews CLI Tool" // プログラム名
 
 	// レビューのフィルター
