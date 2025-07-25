@@ -19,8 +19,15 @@ steam-reviews-cli/
 │   └── stats/
 │       └── stats.go             # 統計処理
 ├── pkg/
-│   └── config/
-│       └── config.go            # 設定関連（外部から利用可能）
+│   ├── config/
+│   │   └── config.go            # 設定関連（外部から利用可能）
+│   └── i18n/
+│       ├── i18n.go              # 国際化メイン実装
+│       ├── messages.go          # メッセージキー定数定義
+│       ├── detector.go          # 言語検出ロジック
+│       ├── en.go                # 英語メッセージ
+│       ├── ja.go                # 日本語メッセージ
+│       └── i18n_test.go         # 国際化機能のテスト
 ├── bin/                         # ビルドしたバイナリの出力先
 ├── logs/                        # ログファイルの出力先
 ├── output/                      # デフォルトのファイル出力先
@@ -71,6 +78,14 @@ steam-reviews-cli/
 - デフォルト値定義
 - バリデーション
 
+### `pkg/i18n/`
+- **i18n.go**: 国際化機能のメイン実装、グローバル関数
+- **messages.go**: メッセージキー定数の定義
+- **detector.go**: 環境変数からの言語検出ロジック
+- **en.go**: 英語メッセージの定義
+- **ja.go**: 日本語メッセージの定義
+- **i18n_test.go**: 国際化機能の単体テスト
+
 ## ファイル分割の利点
 
 ### 1. **保守性の向上**
@@ -105,36 +120,3 @@ cmd/ → internal/ → pkg/
 
 ### インターフェース設計
 各パッケージ間はインターフェースで結合し、具体的な実装に依存しない設計にする
-
-## 追加の改善案
-
-### 1. テストファイルの追加
-```
-internal/api/steam_test.go
-internal/storage/file_test.go
-internal/stats/stats_test.go
-```
-
-### 2. 設定ファイル対応
-```
-configs/
-└── default.yaml
-```
-
-### 3. ドキュメント整備
-```
-docs/
-├── API.md
-├── USAGE.md
-└── DEVELOPMENT.md
-```
-
-### 4. CI/CD設定
-```
-.github/
-└── workflows/
-    ├── test.yml
-    └── release.yml
-```
-
-この構造により、コードの可読性、保守性、テスタビリティが大幅に向上し、将来的な機能拡張も容易になります。

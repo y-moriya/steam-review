@@ -12,6 +12,7 @@ import (
 	"github.com/y-moriya/steam-review/internal/stats"
 	"github.com/y-moriya/steam-review/internal/storage"
 	"github.com/y-moriya/steam-review/pkg/config"
+	"github.com/y-moriya/steam-review/pkg/i18n"
 )
 
 // ParseLanguages カンマ区切りの言語文字列を配列に変換
@@ -79,6 +80,9 @@ func printUsage() {
 }
 
 func main() {
+	// i18n システムを初期化
+	i18n.Init()
+
 	var cfg config.Config
 	var languageStr string
 	var help bool
@@ -102,7 +106,7 @@ func main() {
 
 	// バージョン情報の表示
 	if showVersion {
-		fmt.Printf("%s version %s\n", config.AppName, config.Version)
+		fmt.Printf("%s\n", i18n.Tf(i18n.MsgAppVersion, config.Version))
 		return
 	}
 
@@ -115,26 +119,26 @@ func main() {
 	// ロガーを初期化
 	log, err := logger.New("logs", cfg.Verbose)
 	if err != nil {
-		fmt.Printf("ロガーの初期化に失敗しました: %v\n", err)
+		fmt.Printf("%s\n", i18n.Tf(i18n.MsgErrorLoggerInit, err))
 		os.Exit(1)
 	}
 	defer log.Close()
 
 	// アプリケーション開始ログ
-	log.Infof("%s version %s が開始されました", config.AppName, config.Version)
+	log.Infof("%s", i18n.Tf(i18n.MsgAppStarted, i18n.Tf(i18n.MsgAppVersion, config.Version)))
 
 	// 言語設定をパース
 	cfg.Languages = ParseLanguages(languageStr)
 
 	// バリデーション
 	if cfg.AppID == "" && cfg.GameName == "" {
-		fmt.Printf("エラー: App ID またはゲーム名を指定してください\n\n")
+		fmt.Printf("%s\n\n", i18n.T(i18n.MsgErrorNoInput))
 		printUsage()
 		os.Exit(1)
 	}
 
 	if cfg.AppID != "" && cfg.GameName != "" {
-		fmt.Printf("エラー: App ID とゲーム名の両方を指定することはできません\n\n")
+		fmt.Printf("%s\n\n", i18n.T(i18n.MsgErrorBothInputs))
 		printUsage()
 		os.Exit(1)
 	}
@@ -142,7 +146,7 @@ func main() {
 	// 出力ディレクトリの作成
 	if cfg.OutputDir != "" {
 		if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
-			log.Fatalf("出力ディレクトリの作成に失敗しました: %v", err)
+			log.Fatalf("%s", i18n.Tf(i18n.MsgErrorDirCreation, err))
 		}
 	}
 
@@ -164,11 +168,11 @@ func main() {
 	}
 
 	if err != nil {
-		log.Fatalf("レビュー取得エラー: %v", err)
+		log.Fatalf("%s", i18n.Tf(i18n.MsgErrorReviewFetch, err))
 	}
 
 	if len(reviews) == 0 {
-		log.Info("レビューが見つかりませんでした")
+		log.Info(i18n.T(i18n.MsgStatsNoReviews))
 		return
 	}
 
@@ -177,7 +181,7 @@ func main() {
 	// ゲーム詳細情報を取得
 	gameDetails, err = api.GetGameDetails(appID, cfg.Verbose)
 	if err != nil {
-		log.Verbosef("ゲーム詳細情報の取得に失敗しました: %v", err)
+		log.Verbosef("%s", i18n.Tf(i18n.MsgErrorGameDetailsInit, err))
 		// ゲーム詳細情報が取得できなくてもレビュー保存は続行
 		gameDetails = nil
 	}
@@ -193,7 +197,7 @@ func main() {
 	if cfg.SplitByLang {
 		files, err := storage.SaveReviewsByLanguageWithGameDetails(reviews, baseFilename, cfg.OutputDir, cfg.Verbose, cfg.OutputJSON, gameDetails)
 		if err != nil {
-			log.Errorf("ファイル保存エラー: %v", err)
+			log.Errorf("%s", i18n.Tf(i18n.MsgErrorFileSave, err))
 		}
 		savedFiles = files
 	} else {
@@ -203,15 +207,15 @@ func main() {
 		}
 
 		if savedFile, err := storage.SaveReviewsToFileWithGameDetails(reviews, filename, cfg.OutputJSON, gameDetails); err != nil {
-			log.Errorf("ファイル保存エラー: %v", err)
+			log.Errorf("%s", i18n.Tf(i18n.MsgErrorFileSave, err))
 		} else {
 			savedFiles = append(savedFiles, savedFile)
-			log.Verbosef("レビューを %s に保存しました", filename)
+			log.Verbosef("%s", i18n.Tf(i18n.MsgVerboseReviewSaved, filename))
 		}
 	}
 
 	// 保存したファイル一覧を表示（標準出力のみ）
-	log.Println("\n=== 保存したファイル一覧 ===")
+	log.Printf("\n%s", i18n.T(i18n.MsgFileSavedFiles))
 	for _, file := range savedFiles {
 		log.Printf("- %s\n", file)
 	}
@@ -226,5 +230,5 @@ func main() {
 	// 統計情報を表示
 	stats.PrintReviewStats(reviews, displayGameName, log)
 
-	log.Info("処理が完了しました")
+	log.Info(i18n.T(i18n.MsgSuccessCompleted))
 }

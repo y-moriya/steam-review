@@ -10,6 +10,7 @@ import (
 
 	"github.com/y-moriya/steam-review/internal/models"
 	"github.com/y-moriya/steam-review/pkg/config"
+	"github.com/y-moriya/steam-review/pkg/i18n"
 )
 
 // SaveReviewsToFile レビューをファイルに保存
@@ -21,42 +22,42 @@ func SaveReviewsToFile(reviews []models.ReviewData, filename string, outputJSON 
 func SaveReviewsToFileWithGameDetails(reviews []models.ReviewData, filename string, outputJSON bool, gameDetails *models.GameDetails) (string, error) {
 	file, err := os.Create(filename)
 	if err != nil {
-		return "", fmt.Errorf("ファイル作成エラー: %w", err)
+		return "", fmt.Errorf(i18n.T(i18n.MsgFileCreationError), err)
 	}
 	defer file.Close()
 
 	if !outputJSON {
 		// ゲーム詳細情報をテキストヘッダーとして追加
 		if gameDetails != nil {
-			fmt.Fprintf(file, "=== ゲーム詳細情報 ===\n")
-			fmt.Fprintf(file, "ゲーム名: %s\n", gameDetails.Name)
-			fmt.Fprintf(file, "App ID: %s\n", gameDetails.AppID)
+			fmt.Fprintf(file, "%s\n", i18n.T(i18n.MsgFileGameDetails))
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileGameName, gameDetails.Name))
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileAppID, gameDetails.AppID))
 			if len(gameDetails.Developer) > 0 {
-				fmt.Fprintf(file, "開発者: %s\n", strings.Join(gameDetails.Developer, ", "))
+				fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileDeveloper, strings.Join(gameDetails.Developer, ", ")))
 			}
 			if len(gameDetails.Publisher) > 0 {
-				fmt.Fprintf(file, "パブリッシャー: %s\n", strings.Join(gameDetails.Publisher, ", "))
+				fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFilePublisher, strings.Join(gameDetails.Publisher, ", ")))
 			}
-			fmt.Fprintf(file, "リリース日: %s\n", gameDetails.ReleaseDate)
-			fmt.Fprintf(file, "価格: %s\n", gameDetails.Price)
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileReleaseDate, gameDetails.ReleaseDate))
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFilePrice, gameDetails.Price))
 			if len(gameDetails.Genres) > 0 {
-				fmt.Fprintf(file, "ジャンル: %s\n", strings.Join(gameDetails.Genres, ", "))
+				fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileGenres, strings.Join(gameDetails.Genres, ", ")))
 			}
 			if len(gameDetails.Categories) > 0 {
-				fmt.Fprintf(file, "カテゴリ: %s\n", strings.Join(gameDetails.Categories, ", "))
+				fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileCategories, strings.Join(gameDetails.Categories, ", ")))
 			}
 			if gameDetails.Website != "" {
-				fmt.Fprintf(file, "ウェブサイト: %s\n", gameDetails.Website)
+				fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileWebsite, gameDetails.Website))
 			}
-			fmt.Fprintf(file, "年齢制限: %d歳以上\n", gameDetails.RequiredAge)
-			fmt.Fprintf(file, "無料: %t\n", gameDetails.IsFree)
-			fmt.Fprintf(file, "情報取得日時: %s\n", gameDetails.RetrievedAt.Format("2006-01-02 15:04:05"))
-			fmt.Fprintf(file, "\n=== レビュー一覧 ===\n\n")
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileAgeRestriction, gameDetails.RequiredAge))
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileFree, gameDetails.IsFree))
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileRetrievedAt, gameDetails.RetrievedAt.Format("2006-01-02 15:04:05")))
+			fmt.Fprintf(file, "\n%s\n\n", i18n.T(i18n.MsgFileReviewsList))
 		}
 
 		// テキスト形式で保存
 		for i, review := range reviews {
-			fmt.Fprintf(file, "=== レビュー %d ===\n", i+1)
+			fmt.Fprintf(file, "%s\n", i18n.Tf(i18n.MsgFileReviewNumber, i+1))
 			fmt.Fprintf(file, "ID: %s\n", review.RecommendationID)
 			fmt.Fprintf(file, "language: %s\n", review.Language)
 			fmt.Fprintf(file, "voted_up: ")
@@ -99,7 +100,7 @@ func SaveReviewsToFileWithGameDetails(reviews []models.ReviewData, filename stri
 		encoder.SetIndent("", "  ")
 
 		if err := encoder.Encode(outputData); err != nil {
-			return "", fmt.Errorf("JSON書き込みエラー: %w", err)
+			return "", fmt.Errorf(i18n.T(i18n.MsgFileJSONWriteError), err)
 		}
 	}
 
@@ -139,12 +140,12 @@ func SaveReviewsByLanguageWithGameDetails(reviews []models.ReviewData, baseFilen
 		}
 
 		if savedFile, err := SaveReviewsToFileWithGameDetails(langReviews, filename, outputJSON, gameDetails); err != nil {
-			log.Printf("言語 %s のファイル保存エラー: %v", lang, err)
+			log.Printf(i18n.T(i18n.MsgFileLanguageSaveError), lang, err)
 			continue
 		} else {
 			savedFiles = append(savedFiles, savedFile)
 			if verbose {
-				log.Printf("言語 %s: %d件のレビューを %s に保存", lang, len(langReviews), filename)
+				log.Printf(i18n.T(i18n.MsgFileLanguageSaved), lang, len(langReviews), filename)
 			}
 		}
 	}
@@ -156,11 +157,11 @@ func SaveReviewsByLanguageWithGameDetails(reviews []models.ReviewData, baseFilen
 	}
 
 	if savedFile, err := SaveReviewsToFileWithGameDetails(reviews, summaryFilename, outputJSON, gameDetails); err != nil {
-		return nil, fmt.Errorf("サマリーファイル保存エラー: %w", err)
+		return nil, fmt.Errorf(i18n.T(i18n.MsgFileSummaryError), err)
 	} else {
 		savedFiles = append(savedFiles, savedFile)
 		if verbose {
-			log.Printf("全言語統合ファイルを保存: %s (%d件)", summaryFilename, len(reviews))
+			log.Printf(i18n.T(i18n.MsgFileAllLanguagesSaved), summaryFilename, len(reviews))
 		}
 	}
 
