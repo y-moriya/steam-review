@@ -113,11 +113,11 @@ func main() {
 		appID = cfg.AppID
 		gameName = fmt.Sprintf("App ID %s", appID)
 		log.Verbosef("App ID %s のレビューを取得中...", appID)
-		reviews, err = api.FetchAllReviews(appID, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter)
+		reviews, err = api.FetchAllReviews(appID, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter, log)
 	} else {
 		gameName = cfg.GameName
 		log.Verbosef("ゲーム '%s' のレビューを取得中...", gameName)
-		reviews, appID, err = api.GetReviewsByGameName(gameName, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter)
+		reviews, appID, err = api.GetReviewsByGameName(gameName, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter, log)
 	}
 
 	if err != nil {
@@ -132,7 +132,7 @@ func main() {
 	log.Infof("取得したレビュー数: %d件", len(reviews))
 
 	// ゲーム詳細情報を取得
-	gameDetails, err = api.GetGameDetails(appID, cfg.Verbose)
+	gameDetails, err = api.GetGameDetails(appID, cfg.Verbose, log)
 	if err != nil {
 		log.Verbosef("%s", i18n.Tf(i18n.MsgErrorGameDetailsInit, err))
 		// ゲーム詳細情報が取得できなくてもレビュー保存は続行

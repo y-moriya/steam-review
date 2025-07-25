@@ -189,13 +189,13 @@ func runMain() error {
 		if cfg.Verbose {
 			log.Printf("App ID %s のレビューを取得中...", appID)
 		}
-		reviews, err = api.FetchAllReviews(appID, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter)
+		reviews, err = api.FetchAllReviews(appID, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter, nil)
 	} else {
 		gameName = cfg.GameName
 		if cfg.Verbose {
 			log.Printf("ゲーム '%s' のレビューを取得中...", gameName)
 		}
-		reviews, appID, err = api.GetReviewsByGameName(gameName, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter)
+		reviews, appID, err = api.GetReviewsByGameName(gameName, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter, nil)
 	}
 
 	if err != nil {

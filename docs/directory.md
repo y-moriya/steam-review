@@ -4,9 +4,6 @@
 
 ```
 steam-reviews-cli/
-├── cmd/
-│   └── steam-review/
-│       └── main.go              # エントリーポイント、CLI引数処理
 ├── internal/
 │   ├── api/
 │   │   └── steam.go             # Steam API関連の処理
@@ -34,6 +31,7 @@ steam-reviews-cli/
 ├── test_output/                 # テスト用のファイル出力先
 ├── go.mod
 ├── go.sum
+├── main.go                      # エントリーポイント、CLI引数処理
 └── README.md
 ```
 

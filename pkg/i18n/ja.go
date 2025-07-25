@@ -105,6 +105,29 @@ func getJapaneseMessages() map[string]string {
 		"file.all_languages_saved": "全言語統合ファイルを保存: %s (%d件)",
 		"file.summary_error":       "サマリーファイル保存エラー: %w",
 
+		// API関連エラーメッセージ
+		"error.steam_api_fetch":    "Steam API取得エラー: %w",
+		"error.json_decode":        "JSONデコードエラー: %w",
+		"error.game_not_found":     "ゲーム '%s' が見つかりません",
+		"error.http_request":       "HTTP リクエストエラー: %w",
+		"error.http_status":        "HTTP エラー: %d",
+		"error.steam_api_response": "Steam API エラー: success = %d",
+		"error.app_id_fetch":       "App ID取得エラー: %w",
+		"error.steam_store_fetch":  "Steam Store API取得エラー: %w",
+		"error.app_data_not_found": "App ID %s のデータが見つかりません",
+		"error.game_details_fail":  "App ID %s の詳細情報取得に失敗しました",
+
+		// Verbose/Progress ログメッセージ
+		"verbose.review_fetch_start":    "App ID %s のレビュー取得を開始します",
+		"verbose.review_progress":       "現在のレビュー数: %d, カーソル: %s",
+		"verbose.no_more_reviews":       "これ以上レビューがありません",
+		"verbose.max_reviews_reached":   "最大レビュー数 %d に到達しました",
+		"verbose.cursor_not_changed":    "カーソルが変更されませんでした。終了します",
+		"verbose.total_reviews_fetched": "合計 %d 件のレビューを取得しました",
+		"verbose.game_review_fetch":     "ゲーム '%s' (App ID: %s) のレビューを取得します",
+		"verbose.game_details_fetch":    "App ID %s のゲーム詳細情報を取得中...",
+		"verbose.game_details_obtained": "ゲーム詳細情報を取得しました: %s",
+
 		// 詳細ログ
 		"verbose.review_saved":   "レビューを %s に保存しました",
 		"verbose.language_saved": "言語 %s: %d件のレビューを %s に保存",

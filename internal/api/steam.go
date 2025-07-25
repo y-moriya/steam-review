@@ -2,16 +2,18 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/y-moriya/steam-review/internal/logger"
 	"github.com/y-moriya/steam-review/internal/models"
 	"github.com/y-moriya/steam-review/pkg/config"
+	"github.com/y-moriya/steam-review/pkg/i18n"
 )
 
 // GetAppIDByName ゲーム名からSteam App IDを取得
@@ -19,7 +21,7 @@ func GetAppIDByName(gameName string) (string, error) {
 	url := "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("Steam API取得エラー: %w", err)
+		return "", errors.New(i18n.Tf(i18n.MsgErrorSteamAPIFetch, err))
 	}
 	defer resp.Body.Close()
 
@@ -33,7 +35,7 @@ func GetAppIDByName(gameName string) (string, error) {
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("JSONデコードエラー: %w", err)
+		return "", errors.New(i18n.Tf(i18n.MsgErrorJSONDecode, err))
 	}
 
 	for _, app := range result.Applist.Apps {
@@ -41,7 +43,7 @@ func GetAppIDByName(gameName string) (string, error) {
 			return fmt.Sprintf("%d", app.AppID), nil
 		}
 	}
-	return "", fmt.Errorf("ゲーム '%s' が見つかりません", gameName)
+	return "", errors.New(i18n.Tf(i18n.MsgErrorGameNotFound, gameName))
 }
 
 // setLanguageFilter Steam APIのリクエストパラメータに言語フィルタを設定
@@ -94,21 +96,21 @@ func FetchReviewsFromSteam(appID string, cursor string, numPerPage int, filter s
 
 	resp, err := http.Get(fullURL)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP リクエストエラー: %w", err)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorHTTPRequest, err))
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("HTTP エラー: %d", resp.StatusCode)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorHTTPStatus, resp.StatusCode))
 	}
 
 	var result models.SteamReviewResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("JSON デコードエラー: %w", err)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorJSONDecode, err))
 	}
 
 	if result.Success != 1 {
-		return nil, fmt.Errorf("Steam API エラー: success = %d", result.Success)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorSteamAPIResponse, result.Success))
 	}
 
 	return &result, nil
@@ -143,7 +145,7 @@ func FilterReviewsByLanguage(reviews []models.ReviewData, languages []string) []
 }
 
 // FetchAllReviews 指定されたApp IDのレビューを取得
-func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []string, filter string) ([]models.ReviewData, error) {
+func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []string, filter string, logger *logger.Logger) ([]models.ReviewData, error) {
 	var allReviews []models.ReviewData
 	cursor := "*"
 	numPerPage := 100
@@ -161,23 +163,23 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 		}
 	}
 
-	if verbose {
-		log.Printf("App ID %s のレビュー取得を開始します", appID)
+	if verbose && logger != nil {
+		logger.Verbose(i18n.Tf(i18n.MsgVerboseReviewFetchStart, appID))
 	}
 
 	for {
-		if verbose {
-			log.Printf("現在のレビュー数: %d, カーソル: %s", len(allReviews), cursor)
+		if verbose && logger != nil {
+			logger.Verbose(i18n.Tf(i18n.MsgVerboseReviewProgress, len(allReviews), cursor))
 		}
 
 		resp, err := FetchReviewsFromSteam(appID, cursor, numPerPage, filter, languages)
 		if err != nil {
-			return nil, fmt.Errorf("レビュー取得エラー: %w", err)
+			return nil, errors.New(i18n.Tf(i18n.MsgErrorReviewFetch, err))
 		}
 
 		if len(resp.Reviews) == 0 {
-			if verbose {
-				log.Println("これ以上レビューがありません")
+			if verbose && logger != nil {
+				logger.Verbose(i18n.T(i18n.MsgVerboseNoMoreReviews))
 			}
 			break
 		}
@@ -192,16 +194,16 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 			allReviews = append(allReviews, rd)
 
 			if maxReviews > 0 && len(allReviews) >= maxReviews {
-				if verbose {
-					log.Printf("最大レビュー数 %d に到達しました", maxReviews)
+				if verbose && logger != nil {
+					logger.Verbose(i18n.Tf(i18n.MsgVerboseMaxReviewsReached, maxReviews))
 				}
 				return allReviews[:maxReviews], nil
 			}
 		}
 
 		if resp.Cursor == cursor || resp.Cursor == "" {
-			if verbose {
-				log.Println("カーソルが変更されませんでした。終了します")
+			if verbose && logger != nil {
+				logger.Verbose(i18n.T(i18n.MsgVerboseCursorNotChanged))
 			}
 			break
 		}
@@ -212,59 +214,59 @@ func FetchAllReviews(appID string, maxReviews int, verbose bool, languages []str
 		time.Sleep(1 * time.Second)
 	}
 
-	if verbose {
-		log.Printf("合計 %d 件のレビューを取得しました", len(allReviews))
+	if verbose && logger != nil {
+		logger.Verbose(i18n.Tf(i18n.MsgVerboseTotalReviewsFetched, len(allReviews)))
 	}
 	return allReviews, nil
 }
 
 // GetReviewsByGameName ゲーム名からレビューを取得
-func GetReviewsByGameName(gameName string, maxReviews int, verbose bool, languages []string, filter string) ([]models.ReviewData, string, error) {
+func GetReviewsByGameName(gameName string, maxReviews int, verbose bool, languages []string, filter string, logger *logger.Logger) ([]models.ReviewData, string, error) {
 	appID, err := GetAppIDByName(gameName)
 	if err != nil {
-		return nil, "", fmt.Errorf("App ID取得エラー: %w", err)
+		return nil, "", errors.New(i18n.Tf(i18n.MsgErrorAppIDFetch, err))
 	}
-	if verbose {
-		log.Printf("ゲーム '%s' (App ID: %s) のレビューを取得します", gameName, appID)
+	if verbose && logger != nil {
+		logger.Verbose(i18n.Tf(i18n.MsgVerboseGameReviewFetch, gameName, appID))
 	}
-	reviews, err := FetchAllReviews(appID, maxReviews, verbose, languages, filter)
+	reviews, err := FetchAllReviews(appID, maxReviews, verbose, languages, filter, logger)
 	return reviews, appID, err
 }
 
 // GetGameDetails Steam Store APIからゲーム詳細情報を取得
-func GetGameDetails(appID string, verbose bool) (*models.GameDetails, error) {
-	if verbose {
-		log.Printf("App ID %s のゲーム詳細情報を取得中...", appID)
+func GetGameDetails(appID string, verbose bool, logger *logger.Logger) (*models.GameDetails, error) {
+	if verbose && logger != nil {
+		logger.Verbose(i18n.Tf(i18n.MsgVerboseGameDetailsFetch, appID))
 	}
 
 	url := fmt.Sprintf("https://store.steampowered.com/api/appdetails?appids=%s&l=japanese", appID)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Steam Store API取得エラー: %w", err)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorSteamStoreFetch, err))
 	}
 	defer resp.Body.Close()
 
 	// レスポンスを一度マップとして読み込む
 	var responseMap map[string]models.SteamAppDetailsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseMap); err != nil {
-		return nil, fmt.Errorf("JSONデコードエラー: %w", err)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorJSONDecode, err))
 	}
 
 	// App IDに対応するデータを取得
 	appResponse, exists := responseMap[appID]
 	if !exists {
-		return nil, fmt.Errorf("App ID %s のデータが見つかりません", appID)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorAppDataNotFound, appID))
 	}
 
 	if !appResponse.Success {
-		return nil, fmt.Errorf("App ID %s の詳細情報取得に失敗しました", appID)
+		return nil, errors.New(i18n.Tf(i18n.MsgErrorGameDetailsFail, appID))
 	}
 
 	// GameDetailsに変換
 	gameDetails := models.ConvertToGameDetails(appID, appResponse)
 
-	if verbose {
-		log.Printf("ゲーム詳細情報を取得しました: %s", gameDetails.Name)
+	if verbose && logger != nil {
+		logger.Verbose(i18n.Tf(i18n.MsgVerboseGameDetailsObtained, gameDetails.Name))
 	}
 
 	return &gameDetails, nil

@@ -105,6 +105,29 @@ Notes:
 		"file.all_languages_saved": "All languages summary file saved: %s (%d reviews)",
 		"file.summary_error":       "Summary file save error: %w",
 
+		// API related error messages
+		"error.steam_api_fetch":    "Steam API fetch error: %w",
+		"error.json_decode":        "JSON decode error: %w",
+		"error.game_not_found":     "Game '%s' not found",
+		"error.http_request":       "HTTP request error: %w",
+		"error.http_status":        "HTTP error: %d",
+		"error.steam_api_response": "Steam API error: success = %d",
+		"error.app_id_fetch":       "App ID fetch error: %w",
+		"error.steam_store_fetch":  "Steam Store API fetch error: %w",
+		"error.app_data_not_found": "App ID %s data not found",
+		"error.game_details_fail":  "Failed to get details for App ID %s",
+
+		// Verbose/Progress log messages
+		"verbose.review_fetch_start":    "Starting to fetch reviews for App ID %s",
+		"verbose.review_progress":       "Current reviews: %d, cursor: %s",
+		"verbose.no_more_reviews":       "No more reviews available",
+		"verbose.max_reviews_reached":   "Reached maximum review count %d",
+		"verbose.cursor_not_changed":    "Cursor did not change. Ending process",
+		"verbose.total_reviews_fetched": "Fetched a total of %d reviews",
+		"verbose.game_review_fetch":     "Fetching reviews for game '%s' (App ID: %s)",
+		"verbose.game_details_fetch":    "Fetching game details for App ID %s...",
+		"verbose.game_details_obtained": "Game details obtained: %s",
+
 		// Verbose logging
 		"verbose.review_saved":   "Reviews saved to %s",
 		"verbose.language_saved": "Language %s: %d reviews saved to %s",

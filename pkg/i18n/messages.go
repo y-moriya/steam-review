@@ -65,6 +65,29 @@ const (
 	MsgVerboseReviewSaved   = "verbose.review_saved"
 	MsgVerboseLanguageSaved = "verbose.language_saved"
 
+	// API関連エラーメッセージ
+	MsgErrorSteamAPIFetch    = "error.steam_api_fetch"
+	MsgErrorJSONDecode       = "error.json_decode"
+	MsgErrorGameNotFound     = "error.game_not_found"
+	MsgErrorHTTPRequest      = "error.http_request"
+	MsgErrorHTTPStatus       = "error.http_status"
+	MsgErrorSteamAPIResponse = "error.steam_api_response"
+	MsgErrorAppIDFetch       = "error.app_id_fetch"
+	MsgErrorSteamStoreFetch  = "error.steam_store_fetch"
+	MsgErrorAppDataNotFound  = "error.app_data_not_found"
+	MsgErrorGameDetailsFail  = "error.game_details_fail"
+
+	// Verbose/Progress ログメッセージ
+	MsgVerboseReviewFetchStart    = "verbose.review_fetch_start"
+	MsgVerboseReviewProgress      = "verbose.review_progress"
+	MsgVerboseNoMoreReviews       = "verbose.no_more_reviews"
+	MsgVerboseMaxReviewsReached   = "verbose.max_reviews_reached"
+	MsgVerboseCursorNotChanged    = "verbose.cursor_not_changed"
+	MsgVerboseTotalReviewsFetched = "verbose.total_reviews_fetched"
+	MsgVerboseGameReviewFetch     = "verbose.game_review_fetch"
+	MsgVerboseGameDetailsFetch    = "verbose.game_details_fetch"
+	MsgVerboseGameDetailsObtained = "verbose.game_details_obtained"
+
 	// データフィールド（出力ファイル用）
 	MsgFieldDeveloper   = "field.developer"
 	MsgFieldPublisher   = "field.publisher"
