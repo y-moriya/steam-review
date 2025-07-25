@@ -1,15 +1,19 @@
 package stats
 
 import (
-	"fmt"
-
 	"github.com/y-moriya/steam-review/internal/models"
 )
 
+// Logger インターフェース（ロガーの依存性注入のため）
+type Logger interface {
+	Println(v ...interface{})
+	Printf(format string, v ...interface{})
+}
+
 // PrintReviewStats レビュー統計を表示
-func PrintReviewStats(reviews []models.ReviewData, gameName string) {
+func PrintReviewStats(reviews []models.ReviewData, gameName string, logger Logger) {
 	if len(reviews) == 0 {
-		fmt.Printf("レビューが見つかりませんでした\n")
+		logger.Println("レビューが見つかりませんでした")
 		return
 	}
 
@@ -36,19 +40,21 @@ func PrintReviewStats(reviews []models.ReviewData, gameName string) {
 	positivePercent := float64(positiveReviews) / float64(totalReviews) * 100
 	negativePercent := float64(negativeReviews) / float64(totalReviews) * 100
 
-	fmt.Printf("\n=== レビュー統計 ===\n")
-	fmt.Printf("ゲーム: %s\n", gameName)
-	fmt.Printf("総レビュー数: %d\n", totalReviews)
-	fmt.Printf("肯定的: %d (%.1f%%)\n", positiveReviews, positivePercent)
-	fmt.Printf("否定的: %d (%.1f%%)\n", negativeReviews, negativePercent)
+	logger.Println()
+	logger.Println("=== レビュー統計 ===")
+	logger.Printf("ゲーム: %s", gameName)
+	logger.Printf("総レビュー数: %d", totalReviews)
+	logger.Printf("肯定的: %d (%.1f%%)", positiveReviews, positivePercent)
+	logger.Printf("否定的: %d (%.1f%%)", negativeReviews, negativePercent)
 
-	fmt.Printf("\n言語別レビュー統計:\n")
+	logger.Println()
+	logger.Println("言語別レビュー統計:")
 	for lang, count := range languageCounts {
 		positive := languagePositive[lang]
 		negative := count - positive
 		percent := float64(count) / float64(totalReviews) * 100
 		positiveRate := float64(positive) / float64(count) * 100
-		fmt.Printf("  %s: %d件 (%.1f%%) - 肯定的: %d件 (%.1f%%), 否定的: %d件\n",
+		logger.Printf("  %s: %d件 (%.1f%%) - 肯定的: %d件 (%.1f%%), 否定的: %d件",
 			lang, count, percent, positive, positiveRate, negative)
 	}
 }

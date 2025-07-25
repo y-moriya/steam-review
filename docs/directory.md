@@ -10,6 +10,8 @@ steam-reviews-cli/
 ├── internal/
 │   ├── api/
 │   │   └── steam.go             # Steam API関連の処理
+│   ├── logger/
+│   │   └── logger.go            # ログ機能（標準出力とファイル出力の両方）
 │   ├── models/
 │   │   └── review.go            # データ構造体定義
 │   ├── storage/
@@ -19,6 +21,8 @@ steam-reviews-cli/
 ├── pkg/
 │   └── config/
 │       └── config.go            # 設定関連（外部から利用可能）
+├── bin/                         # ビルドしたバイナリの出力先
+├── logs/                        # ログファイルの出力先
 ├── output/                      # デフォルトのファイル出力先
 ├── test_output/                 # テスト用のファイル出力先
 ├── go.mod
@@ -44,6 +48,12 @@ steam-reviews-cli/
 - レビューデータの取得
 - API レスポンスの処理
 - レート制限対応
+
+### `internal/logger/logger.go`
+- ログ機能の提供
+- 標準出力とログファイルへの同時出力
+- verboseモードでの詳細ログ制御
+- エラーレベル別のログ出力
 
 ### `internal/storage/file.go`
 - ファイル保存処理

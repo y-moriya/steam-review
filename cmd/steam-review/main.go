@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/y-moriya/steam-review/internal/api"
+	"github.com/y-moriya/steam-review/internal/logger"
 	"github.com/y-moriya/steam-review/internal/models"
 	"github.com/y-moriya/steam-review/internal/stats"
 	"github.com/y-moriya/steam-review/internal/storage"
@@ -112,6 +112,17 @@ func main() {
 		return
 	}
 
+	// ロガーを初期化
+	log, err := logger.New("logs", cfg.Verbose)
+	if err != nil {
+		fmt.Printf("ロガーの初期化に失敗しました: %v\n", err)
+		os.Exit(1)
+	}
+	defer log.Close()
+
+	// アプリケーション開始ログ
+	log.Infof("%s version %s が開始されました", config.AppName, config.Version)
+
 	// 言語設定をパース
 	cfg.Languages = ParseLanguages(languageStr)
 
@@ -139,21 +150,16 @@ func main() {
 	var appID string
 	var gameName string
 	var gameDetails *models.GameDetails
-	var err error
 
 	// レビュー取得
 	if cfg.AppID != "" {
 		appID = cfg.AppID
 		gameName = fmt.Sprintf("App ID %s", appID)
-		if cfg.Verbose {
-			log.Printf("App ID %s のレビューを取得中...", appID)
-		}
+		log.Verbosef("App ID %s のレビューを取得中...", appID)
 		reviews, err = api.FetchAllReviews(appID, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter)
 	} else {
 		gameName = cfg.GameName
-		if cfg.Verbose {
-			log.Printf("ゲーム '%s' のレビューを取得中...", gameName)
-		}
+		log.Verbosef("ゲーム '%s' のレビューを取得中...", gameName)
 		reviews, appID, err = api.GetReviewsByGameName(gameName, cfg.MaxReviews, cfg.Verbose, cfg.Languages, cfg.Filter)
 	}
 
@@ -162,16 +168,16 @@ func main() {
 	}
 
 	if len(reviews) == 0 {
-		log.Printf("レビューが見つかりませんでした")
+		log.Info("レビューが見つかりませんでした")
 		return
 	}
+
+	log.Infof("取得したレビュー数: %d件", len(reviews))
 
 	// ゲーム詳細情報を取得
 	gameDetails, err = api.GetGameDetails(appID, cfg.Verbose)
 	if err != nil {
-		if cfg.Verbose {
-			log.Printf("ゲーム詳細情報の取得に失敗しました: %v", err)
-		}
+		log.Verbosef("ゲーム詳細情報の取得に失敗しました: %v", err)
 		// ゲーム詳細情報が取得できなくてもレビュー保存は続行
 		gameDetails = nil
 	}
@@ -187,7 +193,7 @@ func main() {
 	if cfg.SplitByLang {
 		files, err := storage.SaveReviewsByLanguageWithGameDetails(reviews, baseFilename, cfg.OutputDir, cfg.Verbose, cfg.OutputJSON, gameDetails)
 		if err != nil {
-			log.Printf("ファイル保存エラー: %v", err)
+			log.Errorf("ファイル保存エラー: %v", err)
 		}
 		savedFiles = files
 	} else {
@@ -197,21 +203,19 @@ func main() {
 		}
 
 		if savedFile, err := storage.SaveReviewsToFileWithGameDetails(reviews, filename, cfg.OutputJSON, gameDetails); err != nil {
-			log.Printf("ファイル保存エラー: %v", err)
+			log.Errorf("ファイル保存エラー: %v", err)
 		} else {
 			savedFiles = append(savedFiles, savedFile)
-			if cfg.Verbose {
-				log.Printf("レビューを %s に保存しました", filename)
-			}
+			log.Verbosef("レビューを %s に保存しました", filename)
 		}
 	}
 
-	// 保存したファイル一覧を表示
-	fmt.Printf("\n=== 保存したファイル一覧 ===\n")
+	// 保存したファイル一覧を表示（標準出力のみ）
+	log.Println("\n=== 保存したファイル一覧 ===")
 	for _, file := range savedFiles {
-		fmt.Printf("- %s\n", file)
+		log.Printf("- %s\n", file)
 	}
-	fmt.Println()
+	log.Println()
 
 	// ゲーム情報を使用して統計情報を表示
 	displayGameName := gameName
@@ -220,5 +224,7 @@ func main() {
 	}
 
 	// 統計情報を表示
-	stats.PrintReviewStats(reviews, displayGameName)
+	stats.PrintReviewStats(reviews, displayGameName, log)
+
+	log.Info("処理が完了しました")
 }
