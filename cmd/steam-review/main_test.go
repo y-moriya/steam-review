@@ -12,6 +12,7 @@ import (
 	"github.com/y-moriya/steam-review/internal/models"
 	"github.com/y-moriya/steam-review/internal/storage"
 	"github.com/y-moriya/steam-review/pkg/config"
+	"github.com/y-moriya/steam-review/pkg/i18n"
 )
 
 func TestCommandExamples(t *testing.T) {
@@ -130,6 +131,9 @@ func TestParseLanguages(t *testing.T) {
 
 // テスト用にmain()をラップした関数
 func runMain() error {
+	// i18n システムを初期化
+	i18n.Init()
+
 	// コマンドライン引数の定義
 	var cfg config.Config
 	var languageStr string
@@ -162,16 +166,16 @@ func runMain() error {
 	cfg.Languages = ParseLanguages(languageStr)
 
 	if cfg.AppID == "" && cfg.GameName == "" {
-		return fmt.Errorf("App ID またはゲーム名を指定してください")
+		return fmt.Errorf("%s", i18n.T(i18n.MsgErrorNoInput))
 	}
 
 	if cfg.AppID != "" && cfg.GameName != "" {
-		return fmt.Errorf("App ID とゲーム名の両方を指定することはできません")
+		return fmt.Errorf("%s", i18n.T(i18n.MsgErrorBothInputs))
 	}
 
 	if cfg.OutputDir != "" {
 		if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
-			return fmt.Errorf("出力ディレクトリの作成に失敗しました: %v", err)
+			return fmt.Errorf("%s", i18n.Tf(i18n.MsgErrorDirCreation, err))
 		}
 	}
 
@@ -195,7 +199,7 @@ func runMain() error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("レビュー取得エラー: %v", err)
+		return fmt.Errorf("%s", i18n.Tf(i18n.MsgErrorReviewFetch, err))
 	}
 
 	if len(reviews) == 0 {
@@ -211,7 +215,7 @@ func runMain() error {
 	if cfg.SplitByLang {
 		_, err := storage.SaveReviewsByLanguage(reviews, baseFilename, cfg.OutputDir, cfg.Verbose, cfg.OutputJSON)
 		if err != nil {
-			return fmt.Errorf("ファイル保存エラー: %v", err)
+			return fmt.Errorf("%s", i18n.Tf(i18n.MsgErrorFileSave, err))
 		}
 	} else {
 		filename := baseFilename
@@ -221,7 +225,7 @@ func runMain() error {
 
 		_, err := storage.SaveReviewsToFile(reviews, filename, cfg.OutputJSON)
 		if err != nil {
-			return fmt.Errorf("ファイル保存エラー: %v", err)
+			return fmt.Errorf("%s", i18n.Tf(i18n.MsgErrorFileSave, err))
 		}
 	}
 

@@ -12,6 +12,7 @@ const (
 	MsgUsageOptions  = "usage.options"
 	MsgUsageExamples = "usage.examples"
 	MsgUsageHelp     = "usage.help_text"
+	MsgUsageFull     = "usage.full_text"
 
 	// エラーメッセージ
 	MsgErrorNoInput         = "error.no_input"

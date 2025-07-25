@@ -11,6 +11,52 @@ func getEnglishMessages() map[string]string {
 		"usage.title":    "Usage:\n  steam-review [options]",
 		"usage.options":  "Options:",
 		"usage.examples": "Examples:",
+		"usage.full_text": `%s version %s
+
+Usage:
+  steam-review [options]
+
+Options:
+  -appid string         Steam App ID (e.g., 440)
+  -game string          Game name (e.g., "Team Fortress 2")
+  -max int             Maximum number of reviews to retrieve (default: 100, 0 for unlimited)
+  -lang string         Languages to retrieve (comma-separated, default: japanese, e.g., "japanese,english")
+  -output string       Output directory (default: output)
+  -split              Split files by language
+  -json               Output files in JSON format (.json) (default: text format)
+  -verbose            Show detailed logs
+  -filter string      Review filter (recent: by creation date, updated: by update date, all: by helpfulness (default))
+  -help               Show this help
+  -version            Show version information
+
+Examples:
+  # Get Japanese reviews by App ID (default: sorted by helpfulness)
+  steam-review -appid 440 -max 500 -verbose
+
+  # Get reviews sorted by creation date
+  steam-review -appid 440 -max 500 -filter recent -verbose
+
+  # Get English reviews by game name
+  steam-review -game "Cyberpunk 2077" -lang "english" -max 1000 -output ./reviews
+
+  # Get reviews in multiple languages
+  steam-review -game "Elden Ring" -lang "japanese,english" -max 300 -split
+
+  # Save Japanese reviews in JSON format
+  steam-review -appid 570 -max 2000 -output ./dota2_reviews -json -verbose
+
+  # Get reviews in all languages
+  steam-review -appid 730 -lang "all" -max 1000 -split
+
+  # Get recently updated reviews
+  steam-review -appid 730 -filter updated -max 200
+
+Notes:
+  - Specify either App ID or game name, not both
+  - If -lang is not specified, only Japanese reviews will be retrieved by default
+  - Use "all" to retrieve reviews in all languages
+  - Retrieving a large number of reviews may take time
+  - Due to Steam API rate limits, there is a 1-second delay between requests`,
 
 		// Error messages
 		"error.no_input":           "Error: Please specify either App ID or game name",
