@@ -138,6 +138,7 @@ func main() {
 	var reviews []models.ReviewData
 	var appID string
 	var gameName string
+	var gameDetails *models.GameDetails
 	var err error
 
 	// レビュー取得
@@ -165,6 +166,16 @@ func main() {
 		return
 	}
 
+	// ゲーム詳細情報を取得
+	gameDetails, err = api.GetGameDetails(appID, cfg.Verbose)
+	if err != nil {
+		if cfg.Verbose {
+			log.Printf("ゲーム詳細情報の取得に失敗しました: %v", err)
+		}
+		// ゲーム詳細情報が取得できなくてもレビュー保存は続行
+		gameDetails = nil
+	}
+
 	// ファイル保存
 	ext := ".txt"
 	if cfg.OutputJSON {
@@ -174,7 +185,7 @@ func main() {
 
 	var savedFiles []string
 	if cfg.SplitByLang {
-		files, err := storage.SaveReviewsByLanguage(reviews, baseFilename, cfg.OutputDir, cfg.Verbose, cfg.OutputJSON)
+		files, err := storage.SaveReviewsByLanguageWithGameDetails(reviews, baseFilename, cfg.OutputDir, cfg.Verbose, cfg.OutputJSON, gameDetails)
 		if err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
 		}
@@ -185,7 +196,7 @@ func main() {
 			filename = cfg.OutputDir + "/" + filename
 		}
 
-		if savedFile, err := storage.SaveReviewsToFile(reviews, filename, cfg.OutputJSON); err != nil {
+		if savedFile, err := storage.SaveReviewsToFileWithGameDetails(reviews, filename, cfg.OutputJSON, gameDetails); err != nil {
 			log.Printf("ファイル保存エラー: %v", err)
 		} else {
 			savedFiles = append(savedFiles, savedFile)
@@ -202,6 +213,12 @@ func main() {
 	}
 	fmt.Println()
 
+	// ゲーム情報を使用して統計情報を表示
+	displayGameName := gameName
+	if gameDetails != nil {
+		displayGameName = gameDetails.Name
+	}
+
 	// 統計情報を表示
-	stats.PrintReviewStats(reviews, gameName)
+	stats.PrintReviewStats(reviews, displayGameName)
 }

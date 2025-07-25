@@ -19,6 +19,8 @@ steam-reviews-cli/
 ├── pkg/
 │   └── config/
 │       └── config.go            # 設定関連（外部から利用可能）
+├── output/                      # デフォルトのファイル出力先
+├── test_output/                 # テスト用のファイル出力先
 ├── go.mod
 ├── go.sum
 └── README.md

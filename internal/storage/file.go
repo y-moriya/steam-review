@@ -14,6 +14,11 @@ import (
 
 // SaveReviewsToFile レビューをファイルに保存
 func SaveReviewsToFile(reviews []models.ReviewData, filename string, outputJSON bool) (string, error) {
+	return SaveReviewsToFileWithGameDetails(reviews, filename, outputJSON, nil)
+}
+
+// SaveReviewsToFileWithGameDetails ゲーム詳細情報付きでレビューをファイルに保存
+func SaveReviewsToFileWithGameDetails(reviews []models.ReviewData, filename string, outputJSON bool, gameDetails *models.GameDetails) (string, error) {
 	file, err := os.Create(filename)
 	if err != nil {
 		return "", fmt.Errorf("ファイル作成エラー: %w", err)
@@ -21,6 +26,34 @@ func SaveReviewsToFile(reviews []models.ReviewData, filename string, outputJSON 
 	defer file.Close()
 
 	if !outputJSON {
+		// ゲーム詳細情報をテキストヘッダーとして追加
+		if gameDetails != nil {
+			fmt.Fprintf(file, "=== ゲーム詳細情報 ===\n")
+			fmt.Fprintf(file, "ゲーム名: %s\n", gameDetails.Name)
+			fmt.Fprintf(file, "App ID: %s\n", gameDetails.AppID)
+			if len(gameDetails.Developer) > 0 {
+				fmt.Fprintf(file, "開発者: %s\n", strings.Join(gameDetails.Developer, ", "))
+			}
+			if len(gameDetails.Publisher) > 0 {
+				fmt.Fprintf(file, "パブリッシャー: %s\n", strings.Join(gameDetails.Publisher, ", "))
+			}
+			fmt.Fprintf(file, "リリース日: %s\n", gameDetails.ReleaseDate)
+			fmt.Fprintf(file, "価格: %s\n", gameDetails.Price)
+			if len(gameDetails.Genres) > 0 {
+				fmt.Fprintf(file, "ジャンル: %s\n", strings.Join(gameDetails.Genres, ", "))
+			}
+			if len(gameDetails.Categories) > 0 {
+				fmt.Fprintf(file, "カテゴリ: %s\n", strings.Join(gameDetails.Categories, ", "))
+			}
+			if gameDetails.Website != "" {
+				fmt.Fprintf(file, "ウェブサイト: %s\n", gameDetails.Website)
+			}
+			fmt.Fprintf(file, "年齢制限: %d歳以上\n", gameDetails.RequiredAge)
+			fmt.Fprintf(file, "無料: %t\n", gameDetails.IsFree)
+			fmt.Fprintf(file, "情報取得日時: %s\n", gameDetails.RetrievedAt.Format("2006-01-02 15:04:05"))
+			fmt.Fprintf(file, "\n=== レビュー一覧 ===\n\n")
+		}
+
 		// テキスト形式で保存
 		for i, review := range reviews {
 			fmt.Fprintf(file, "=== レビュー %d ===\n", i+1)
@@ -52,10 +85,20 @@ func SaveReviewsToFile(reviews []models.ReviewData, filename string, outputJSON 
 		}
 	} else {
 		// JSON形式で保存
+		type OutputData struct {
+			GameDetails *models.GameDetails `json:"game_details,omitempty"`
+			Reviews     []models.ReviewData `json:"reviews"`
+		}
+
+		outputData := OutputData{
+			GameDetails: gameDetails,
+			Reviews:     reviews,
+		}
+
 		encoder := json.NewEncoder(file)
 		encoder.SetIndent("", "  ")
 
-		if err := encoder.Encode(reviews); err != nil {
+		if err := encoder.Encode(outputData); err != nil {
 			return "", fmt.Errorf("JSON書き込みエラー: %w", err)
 		}
 	}
@@ -65,6 +108,11 @@ func SaveReviewsToFile(reviews []models.ReviewData, filename string, outputJSON 
 
 // SaveReviewsByLanguage レビューを言語別に分けてファイルに保存
 func SaveReviewsByLanguage(reviews []models.ReviewData, baseFilename, outputDir string, verbose bool, outputJSON bool) ([]string, error) {
+	return SaveReviewsByLanguageWithGameDetails(reviews, baseFilename, outputDir, verbose, outputJSON, nil)
+}
+
+// SaveReviewsByLanguageWithGameDetails ゲーム詳細情報付きでレビューを言語別に分けてファイルに保存
+func SaveReviewsByLanguageWithGameDetails(reviews []models.ReviewData, baseFilename, outputDir string, verbose bool, outputJSON bool, gameDetails *models.GameDetails) ([]string, error) {
 	var savedFiles []string
 	// 言語別にレビューを分類
 	reviewsByLanguage := make(map[string][]models.ReviewData)
@@ -90,7 +138,7 @@ func SaveReviewsByLanguage(reviews []models.ReviewData, baseFilename, outputDir 
 			filename = outputDir + "/" + filename
 		}
 
-		if savedFile, err := SaveReviewsToFile(langReviews, filename, outputJSON); err != nil {
+		if savedFile, err := SaveReviewsToFileWithGameDetails(langReviews, filename, outputJSON, gameDetails); err != nil {
 			log.Printf("言語 %s のファイル保存エラー: %v", lang, err)
 			continue
 		} else {
@@ -107,7 +155,7 @@ func SaveReviewsByLanguage(reviews []models.ReviewData, baseFilename, outputDir 
 		summaryFilename = outputDir + "/" + summaryFilename
 	}
 
-	if savedFile, err := SaveReviewsToFile(reviews, summaryFilename, outputJSON); err != nil {
+	if savedFile, err := SaveReviewsToFileWithGameDetails(reviews, summaryFilename, outputJSON, gameDetails); err != nil {
 		return nil, fmt.Errorf("サマリーファイル保存エラー: %w", err)
 	} else {
 		savedFiles = append(savedFiles, savedFile)

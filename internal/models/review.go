@@ -3,7 +3,118 @@ package models
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
+	"time"
 )
+
+// GameDetails ゲーム詳細情報構造体
+type GameDetails struct {
+	AppID       string    `json:"app_id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Publisher   []string  `json:"publisher"`
+	Developer   []string  `json:"developer"`
+	ReleaseDate string    `json:"release_date"`
+	Price       string    `json:"price"`
+	Currency    string    `json:"currency"`
+	Tags        []string  `json:"tags"`
+	Categories  []string  `json:"categories"`
+	Genres      []string  `json:"genres"`
+	HeaderImage string    `json:"header_image"`
+	Website     string    `json:"website"`
+	RequiredAge int       `json:"required_age"`
+	IsFree      bool      `json:"is_free"`
+	RetrievedAt time.Time `json:"retrieved_at"`
+}
+
+// SteamAppDetailsResponse Steam Store APIからのレスポンス構造体
+type SteamAppDetailsResponse struct {
+	Success bool `json:"success"`
+	Data    struct {
+		Name                string   `json:"name"`
+		SteamAppID          int      `json:"steam_appid"`
+		RequiredAge         int      `json:"required_age"`
+		IsFree              bool     `json:"is_free"`
+		DetailedDescription string   `json:"detailed_description"`
+		AboutTheGame        string   `json:"about_the_game"`
+		ShortDescription    string   `json:"short_description"`
+		HeaderImage         string   `json:"header_image"`
+		Website             string   `json:"website"`
+		Developers          []string `json:"developers"`
+		Publishers          []string `json:"publishers"`
+		PriceOverview       struct {
+			Currency        string `json:"currency"`
+			Initial         int    `json:"initial"`
+			Final           int    `json:"final"`
+			DiscountPercent int    `json:"discount_percent"`
+			FinalFormatted  string `json:"final_formatted"`
+		} `json:"price_overview"`
+		ReleaseDate struct {
+			ComingSoon bool   `json:"coming_soon"`
+			Date       string `json:"date"`
+		} `json:"release_date"`
+		Categories []struct {
+			ID          int    `json:"id"`
+			Description string `json:"description"`
+		} `json:"categories"`
+		Genres []struct {
+			ID          string `json:"id"`
+			Description string `json:"description"`
+		} `json:"genres"`
+	} `json:"data"`
+}
+
+// ConvertToGameDetails Steam Store APIのレスポンスをGameDetailsに変換
+func ConvertToGameDetails(appID string, response SteamAppDetailsResponse) GameDetails {
+	var categories []string
+	for _, cat := range response.Data.Categories {
+		categories = append(categories, cat.Description)
+	}
+
+	var genres []string
+	for _, genre := range response.Data.Genres {
+		genres = append(genres, genre.Description)
+	}
+
+	price := "Free"
+	currency := ""
+	if !response.Data.IsFree && response.Data.PriceOverview.FinalFormatted != "" {
+		price = response.Data.PriceOverview.FinalFormatted
+		currency = response.Data.PriceOverview.Currency
+	}
+
+	// 説明文は短い説明を優先し、なければ詳細説明を使用
+	description := response.Data.ShortDescription
+	if description == "" {
+		description = response.Data.AboutTheGame
+		if description == "" {
+			description = response.Data.DetailedDescription
+		}
+	}
+
+	// HTMLタグを簡易的に除去
+	description = strings.ReplaceAll(description, "<br>", "\n")
+	description = strings.ReplaceAll(description, "<p>", "")
+	description = strings.ReplaceAll(description, "</p>", "\n")
+
+	return GameDetails{
+		AppID:       appID,
+		Name:        response.Data.Name,
+		Description: description,
+		Publisher:   response.Data.Publishers,
+		Developer:   response.Data.Developers,
+		ReleaseDate: response.Data.ReleaseDate.Date,
+		Price:       price,
+		Currency:    currency,
+		Categories:  categories,
+		Genres:      genres,
+		HeaderImage: response.Data.HeaderImage,
+		Website:     response.Data.Website,
+		RequiredAge: response.Data.RequiredAge,
+		IsFree:      response.Data.IsFree,
+		RetrievedAt: time.Now(),
+	}
+}
 
 // SteamReviewResponse Steam APIからのレスポンス構造体
 type SteamReviewResponse struct {

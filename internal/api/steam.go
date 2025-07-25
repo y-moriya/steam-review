@@ -230,3 +230,42 @@ func GetReviewsByGameName(gameName string, maxReviews int, verbose bool, languag
 	reviews, err := FetchAllReviews(appID, maxReviews, verbose, languages, filter)
 	return reviews, appID, err
 }
+
+// GetGameDetails Steam Store APIからゲーム詳細情報を取得
+func GetGameDetails(appID string, verbose bool) (*models.GameDetails, error) {
+	if verbose {
+		log.Printf("App ID %s のゲーム詳細情報を取得中...", appID)
+	}
+
+	url := fmt.Sprintf("https://store.steampowered.com/api/appdetails?appids=%s&l=japanese", appID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("Steam Store API取得エラー: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// レスポンスを一度マップとして読み込む
+	var responseMap map[string]models.SteamAppDetailsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&responseMap); err != nil {
+		return nil, fmt.Errorf("JSONデコードエラー: %w", err)
+	}
+
+	// App IDに対応するデータを取得
+	appResponse, exists := responseMap[appID]
+	if !exists {
+		return nil, fmt.Errorf("App ID %s のデータが見つかりません", appID)
+	}
+
+	if !appResponse.Success {
+		return nil, fmt.Errorf("App ID %s の詳細情報取得に失敗しました", appID)
+	}
+
+	// GameDetailsに変換
+	gameDetails := models.ConvertToGameDetails(appID, appResponse)
+
+	if verbose {
+		log.Printf("ゲーム詳細情報を取得しました: %s", gameDetails.Name)
+	}
+
+	return &gameDetails, nil
+}
